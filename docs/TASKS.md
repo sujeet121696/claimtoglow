@@ -57,17 +57,21 @@
 
 **Noise floor results**
 
-| Concern | n | SD | Floor (2 SD) |
+| Concern | n | SD | Floor (2√2 SD) |
 |---|---|---|---|
 | _pending_ | | | |
 
 ## Oct 6 – 18 · Daily photo + two weekends → M2
 11. [ ] Keep daily photos going
-12. [ ] Choose backend and web stack, and record them in `ARCHITECTURE.md`
-13. [ ] Analyzer module with local result cache
+12. [x] Choose backend and web stack, and record them in `ARCHITECTURE.md` (Oct 6: FastAPI + React/Vite, as Ringproof)
+13. [x] Analyzer module with local result cache (`app/analyzer.py`, shared with the noise script)
 14. [ ] Analyse trial photos so far; confirm which direction of `raw_score` is "better" per concern
 15. [ ] Verdict engine with the noise-floor rule
 16. [ ] Capture gate: brightness + face framing/pose (MediaPipe), day-0 ghost overlay
+    - [x] Built in the lab app (`web/src/gate.ts`): Capture, Upload and Results screens. Checked on
+          the 2 test photos via Upload; flags uneven light and off-centre nose correctly
+    - [ ] Test the live camera on the laptop and on the phone (`npm run dev:phone`)
+    - [ ] Tune thresholds from the day-0 session
 
 ## Oct 19 – 29 · Daily photo only → M3
 17. [ ] Keep daily photos going (trial ends by Oct 24)

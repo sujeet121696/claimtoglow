@@ -31,6 +31,11 @@ Source: https://docs.makeupar.com/reference/ai_skin_analysis (checked Sep 27, 20
 | Billing | Units consumed only on `success` |
 | Retention | Results kept 24 hours, so store them locally |
 
+**Observed Oct 6 (2 faces):** `raw_score` is 0–100 and higher looks better (to confirm). It
+differs a lot from `ui_score` (moisture 48 raw vs 69 ui). A face that measured 55% wide by
+MediaPipe landmarks was accepted, so YouCam's "60%" uses a wider face box. Rejected tasks cost
+no units.
+
 **Use `raw_score`, not `ui_score`.** The docs call `ui_score` "psychologically adjusted": it's
 tuned to look nice to users, not to measure change.
 
@@ -51,21 +56,38 @@ expression, mouth closed, eyes open. Errors to handle: `error_src_face_too_small
 |---|---|
 | Skin analysis | YouCam Skin Analysis API |
 | Claim agent | LLM via a thin provider layer (same pattern as Resolve's `brain.ts` / Ringproof) |
-| Capture gate | In-browser checks: brightness, MediaPipe face landmarks for framing and pose |
-| Backend | _TBD_ |
-| Web app | _TBD_ |
-| Noise test | `scripts/noise_test.py` (Python stdlib; Pillow for `--split`) |
+| Capture gate | In-browser checks: MediaPipe face landmarks (`@mediapipe/tasks-vision`) + pixel brightness |
+| Backend | Python + FastAPI (`app/`), same as Ringproof. Photos and results on local disk |
+| Web app | React + Vite + TypeScript (`web/`), same as Ringproof |
+| Noise test | `scripts/noise_test.py`, shares `app/` modules and the results cache with the web app |
+
+**Decided Oct 6:** same stack as Ringproof, so the provider layer and dashboard patterns carry over.
+
+## Layout
+
+```
+app/       FastAPI: youcam.py (client), analyzer.py (cache, split halves), noise.py, main.py (API)
+web/src/   gate.ts (capture checks), CameraView / UploadView / ResultsView
+scripts/   noise_test.py (CLI)
+photos/    <set>/<stem>.jpg + <stem>.meta.json (gate result, SHA-256). Git-ignored
+results/   <set>/<stem>.json, <set>-split/<stem>-L.json. Git-ignored
+```
 
 ## 4. Modules
 
-| Module | Input | Output |
-|---|---|---|
-| Claim agent | Claim text | `{ concerns[], direction, deadline_days, rationale }` |
-| Capture gate | Camera frame + day-0 reference | pass/fail + reason |
-| Analyzer | Accepted photo | `{ concern: raw_score }`, cached locally |
-| Noise floor | Repeat-photo scores | Per-concern threshold |
-| Verdict engine | Day-0 vs latest scores + thresholds + claim | met / not met / not enough evidence |
-| Receipt | Everything above + photo SHA-256 hashes | Public page + badge snippet |
+| Module | Input | Output | Status |
+|---|---|---|---|
+| Claim agent | Claim text | `{ concerns[], direction, deadline_days, rationale }` | Not started |
+| Capture gate | Camera frame or photo + day-0 reference | pass/fail per check + hint | `web/src/gate.ts`; thresholds untuned |
+| Analyzer | Accepted photo | `{ concern: raw_score }`, cached locally | `app/analyzer.py` |
+| Noise floor | Repeat-photo scores | Per-concern floor (2√2 × SD) | `app/noise.py` |
+| Verdict engine | Day-0 vs latest scores + thresholds + claim | met / not met / not enough evidence | Not started (Results screen shows Δ vs floor) |
+| Receipt | Everything above + photo SHA-256 hashes | Public page + badge snippet | Hashes stored; page not started |
+
+**Capture gate checks:** one face; face width 55–78% of the image; whole face in frame; nose on
+the centre line (±3%, needed for the split); yaw/roll; chin level; neutral face (blendshapes);
+brightness and glare; even light on both halves (≤10%); short side ≥ 480 px; and, once day 0
+exists, a match to day 0 (distance, position, chin, light). Landscape cameras are cropped to 3:4.
 
 ## 5. Verdict rule (draft)
 

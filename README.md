@@ -26,16 +26,38 @@ Skin apps tell you your score. Claim to Glow tells you whether the product kept 
 only when the evidence is strong enough to say so.
 
 > Built for the **YouCam API Skin AI & eCommerce VTO Hackathon** by Perfect Corp.
-> Status: **pre-build.** Deadline: Nov 2, 2026.
+> Status: **early build** (capture lab and noise test). Deadline: Nov 2, 2026.
+
+## Run locally
+
+```sh
+cp .env.example .env                      # add your YouCam API key
+python -m venv .venv
+.venv/Scripts/pip install -r requirements.txt   # macOS/Linux: .venv/bin/pip
+.venv/Scripts/python -m uvicorn app.main:app --port 8000
+
+cd web && npm install                     # also fetches the MediaPipe model
+npm run dev                               # http://localhost:5173 (laptop camera)
+npm run dev:phone                         # https://<pc-ip>:5173 for a phone on the same Wi-Fi
+```
+
+The lab app has three screens:
+
+- **Capture:** live camera with the capture gate. The shutter works only when every check passes.
+  Auto-capture beeps a countdown for a phone on a stand.
+- **Upload:** runs the same gate on photos from the phone's camera app.
+- **Results:** analyse a set with YouCam, compare scores and changes against the noise floor.
+
+Photos go to `photos/<set>/` and results to `results/`. Both stay out of git.
 
 ## Noise test
 
 Before trusting any "−18%", measure how much scores move when nothing changed:
 
 ```sh
-cp .env.example .env   # add your YouCam API key
-python scripts/noise_test.py photos/noise-01 --limit 1   # one photo first, check unit usage
-python scripts/noise_test.py photos/noise-01             # then the full set (~10 photos)
+.venv/Scripts/python scripts/noise_test.py photos/noise-01 --limit 1   # one photo first
+.venv/Scripts/python scripts/noise_test.py photos/noise-01             # the full set (~10 photos)
+.venv/Scripts/python scripts/noise_test.py photos/noise-01 --split     # split-face halves
 ```
 
 See [`docs/TASKS.md`](docs/TASKS.md) for how to take the photos.

@@ -12,7 +12,11 @@ counting only changes bigger than the measurement noise.
 | Deadline | Nov 2, 2026, 11:45 am ET |
 | Team | Solo |
 | Priority | Second to Ringproof (Nebius, Oct 30). Light work until Oct 29, full build Oct 30 – Nov 2 |
-| Status | Pre-build |
+| Status | Early build: capture lab + noise test (Oct 6) |
+
+## Stack
+
+Python + FastAPI (`app/`), React + Vite + TypeScript (`web/`). Run instructions in README.md.
 
 ## Docs
 
