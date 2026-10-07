@@ -1,0 +1,25 @@
+.people-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-4); }
+
+.person-card { display: grid; gap: var(--space-3); align-content: start; }
+.person-head { display: flex; justify-content: space-between; align-items: start; gap: var(--space-2); }
+.person-head > div { min-width: 0; }
+.person-head h2 { margin: 0; font-size: 18px; }
+.person-head p { margin: 2px 0 0; }
+
+.progress { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
+.progress span { display: block; height: 100%; background: var(--brand-green); }
+
+.tasks { list-style: none; margin: 0; padding: 0; }
+.tasks li { display: grid; grid-template-columns: 18px 1fr auto; align-items: center; gap: var(--space-2); padding: var(--space-2) 0; border-top: 1px solid var(--border); }
+.task-actions { display: inline-flex; gap: 4px; }
+
+.day0 { display: grid; grid-template-columns: 64px 1fr; gap: var(--space-3); border-top: 1px solid var(--border); padding-top: var(--space-3); }
+.day0 img { width: 64px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); }
+.day0-title { display: flex; align-items: center; gap: var(--space-2); }
+.day0 p { margin: 4px 0 0; }
+.verdict { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.concern-changes { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.concern-changes li { display: flex; justify-content: space-between; gap: var(--space-2); }
+.concern-changes .change.better { color: var(--pass); font-weight: 700; }
+.concern-changes .change.worse { color: var(--fail); font-weight: 700; }
+.concern-changes .change.steady, .concern-changes .change.unknown { color: var(--muted); }

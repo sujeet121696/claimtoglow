@@ -1,0 +1,59 @@
+/* Design tokens. Palette from KharidWise (kharidwise/plan/docs/10-design.md): Deep Navy for text
+   and primary actions, link blue, AI Green for fills only (too light for small text, so --pass is
+   a darker green), Cyan for dark-mode actions, Lavender for notes. Change colours here only. */
+:root {
+  --bg: #f6f4fb;
+  --surface: #ffffff;
+  --note-bg: #f3effa;
+  --text: #0a2540;
+  --muted: #5c6b80;
+  --border: #dde3ea;
+  --border-strong: #c3ccd8;
+  --accent: #0a2540;
+  --accent-text: #ffffff;
+  --link: #0077b6;
+  --brand-green: #00c853;
+  --lavender: #d1c4e9;
+  --pass: #007a36;
+  --pass-bg: #d8f5e3;
+  --fail: #c62828;
+  --fail-bg: #fbe3e1;
+  --up: #d8f5e3;
+  --down: #fbe3e1;
+
+  --font-display: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: 'Figtree', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 32px;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 2px rgb(10 37 64 / 0.06);
+  --page-max: 1200px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161a;
+    --surface: #1a1d22;
+    --note-bg: #211f2b;
+    --text: #e6e8eb;
+    --muted: #9aa2ad;
+    --border: #2b2f36;
+    --border-strong: #3a404a;
+    --accent: #00b0ff;
+    --accent-text: #14161a;
+    --link: #00b0ff;
+    --pass: #00c853;
+    --pass-bg: #133a24;
+    --fail: #ef6b5b;
+    --fail-bg: #45231f;
+    --up: #133a24;
+    --down: #45231f;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}

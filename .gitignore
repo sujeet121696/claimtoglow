@@ -1,0 +1,10 @@
+.env
+photos/
+results/
+__pycache__/
+node_modules/
+.DS_Store
+.venv/
+web/dist/
+web/public/mediapipe/
+.lab_token
