@@ -1,0 +1,16 @@
+.capture { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--space-4); align-items: start; }
+
+.stage { position: relative; background: #000; border-radius: var(--radius); overflow: hidden; min-height: 360px; display: grid; place-items: center; }
+.view { display: block; width: 100%; height: auto; max-height: 76vh; object-fit: contain; }
+.hidden-video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.stage-empty { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: var(--space-2); padding: var(--space-4); color: #fff; text-align: center; }
+.stage-empty p { margin: 0; opacity: 0.8; }
+
+.capture-side { display: grid; gap: var(--space-4); }
+.shutter { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
+.option { display: flex; align-items: center; gap: var(--space-2); padding: 4px 0; font-size: 14px; }
+.option select { flex: 1; min-width: 0; }
+
+@media (max-width: 860px) {
+  .capture { grid-template-columns: 1fr; }
+}

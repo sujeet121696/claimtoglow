@@ -10,6 +10,14 @@
 - LLM calls go through the provider layer. Never call a provider SDK directly.
 - The claim agent and the verdict engine return structured output, never free text.
 
+**Frontend structure** (`web/src`, see ARCHITECTURE.md):
+- Each screen is a folder in `features/` with a thin `*Page.tsx` (reads store and URL) and
+  reusable parts (e.g. `Camera`, `Uploader`) that take plain props.
+- Every page is `PageHeader` + `Card`s. Use the shared components before writing new markup.
+- Colours, spacing and radii come from `styles/tokens.css` only. Feature CSS sits next to the feature.
+- Domain rules (set names, kinds, labels) live in `domain/trial.ts`, API calls in `api/client.ts`.
+- New screen: add it to `PAGES` in `app/router.ts` and `VIEWS` in `app/App.tsx`.
+
 ## 2. Wording
 
 - Say "cosmetic skin metrics" and "observed change". Never "diagnose", "treat" or "clinically

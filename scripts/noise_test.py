@@ -4,9 +4,9 @@
 Take ~10 photos of the same face in one sitting (same light, same distance, step out of frame
 between shots), put them in one folder, then run:
 
-    python scripts/noise_test.py photos/noise-01 --limit 1   # one photo first, check unit usage
-    python scripts/noise_test.py photos/noise-01             # the full set
-    python scripts/noise_test.py photos/noise-01 --split     # split-face: each half mirrored
+    python scripts/noise_test.py photos/noise-sujeet --limit 1   # one photo first, check unit usage
+    python scripts/noise_test.py photos/noise-sujeet             # the full set
+    python scripts/noise_test.py photos/noise-sujeet --split     # split-face: each half mirrored
 
 --split builds two synthetic faces per photo, one from the image's left half plus its mirror (L)
 and one from the right half (R), split at the image centre, so keep the nose centred in frame.
@@ -28,7 +28,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.analyzer import DEFAULT_ACTIONS, analyze_cached, cached_scores, mirror_halves, photo_files, result_dir  # noqa: E402
-from app.config import ROOT  # noqa: E402
+from app.config import ROOT, key_var_for  # noqa: E402
 from app.noise import noise_rows  # noqa: E402
 from app.youcam import YouCam  # noqa: E402
 
@@ -41,8 +41,10 @@ def main():
     parser.add_argument("--split", action="store_true", help="Analyse mirrored left and right halves")
     args = parser.parse_args()
 
+    key_var = key_var_for(args.folder.name)
+    print(f"Using {key_var}")
     try:
-        client = YouCam.from_env()
+        client = YouCam.from_env(key_var)
     except RuntimeError as e:
         sys.exit(str(e))
     actions = [a.strip() for a in args.actions.split(",") if a.strip()]

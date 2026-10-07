@@ -93,7 +93,8 @@ G2 and G4 are the core. Without them this is just another skin tracker.
 ## 7. Scope
 
 **In (hackathon demo)**
-- One real split-face trial on the author's own skin as the demo story. Day 0 Oct 7 (moved from Oct 3); length is
+- Real split-face trials as the demo story: the author plus two consenting volunteers (planned Oct 6),
+  one product per person. Day 0 Oct 7 (moved from Oct 3); length is
   the claim's deadline, at most 21 days (ends by Oct 28).
 - Web app: claim, capture, timeline, verdict and receipt screens.
 
@@ -101,6 +102,7 @@ G2 and G4 are the core. Without them this is just another skin tracker.
 - Medical claims or diagnosis. Wording is always "cosmetic skin metrics" and "observed change".
 - Multi-user accounts, brand dashboards, billing.
 - A real Shopify app. The badge is a snippet or mockup.
+- The post-hackathon agent, accounts and scaling: see [VISION.md](VISION.md).
 
 ## 8. Success criteria
 

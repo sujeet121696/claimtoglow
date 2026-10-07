@@ -23,12 +23,12 @@ Source: https://docs.makeupar.com/reference/ai_skin_analysis (checked Sep 27, 20
 | Item | Value |
 |---|---|
 | Base URL | `https://yce-api-01.makeupar.com/s2s/v2.0` (India region) |
-| Auth | `Authorization: Bearer <API key>` |
+| Auth | `Authorization: Bearer <API key>`. One key per teammate: sets `trial-<person>` / `noise-<person>` use `YOUCAM_API_KEY_<PERSON>` when set, else `YOUCAM_API_KEY` (`app/config.py`) |
 | Upload | `POST /file` → `file_id` + pre-signed `PUT` URL, then upload the bytes |
 | Create task | `POST /task/skin-analysis` with `src_file_id`, `dst_actions[]`, `format: "json"` |
 | Poll | `GET /task/skin-analysis/{task_id}` → `task_status`: `running` / `success` / `error` |
 | Output | `results.output[]` of `{ type, ui_score, raw_score, mask_urls }` |
-| Billing | Units consumed only on `success` |
+| Billing | 14 units per SD analysis with 10 concerns (Oct 6 console); only on `success`. Same photo re-analysed gives identical scores |
 | Retention | Results kept 24 hours, so store them locally |
 
 **Observed Oct 6 (2 faces):** `raw_score` is 0–100 and higher looks better (to confirm). It
@@ -66,10 +66,21 @@ expression, mouth closed, eyes open. Errors to handle: `error_src_face_too_small
 ## Layout
 
 ```
-app/       FastAPI: youcam.py (client), analyzer.py (cache, split halves), noise.py, main.py (API)
-web/src/   gate.ts (capture checks), CameraView / UploadView / ResultsView
+app/       FastAPI: youcam.py (client), analyzer.py (cache, split halves), noise.py,
+           trials.py (people, trial.json, day numbering, retake), main.py (API)
+web/src/   app/        shell, hash router (#/page?key=value), store (people, selected person)
+           api/        typed client, one function per endpoint (future agent tools, VISION D1)
+           domain/     trial rules: kinds, set names, labels, concerns (mirrors app/trials.py)
+           lib/        gate.ts (capture checks), landmarker, gate backfill, storage, beep
+           components/ PageHeader, Card, Segmented, Field, Badge, ChecksList
+           features/   today, people, capture (Camera), upload (Uploader), results
+           styles/     tokens.css (colours, spacing), base.css, components.css
 scripts/   noise_test.py (CLI)
 photos/    <set>/<stem>.jpg + <stem>.meta.json (gate result, SHA-256). Git-ignored
+           trial-<person>/trial.json: product, claim, treated side, day 0, length.
+           trial-<person>: daily photos day-NN, NN = days since day 0 (gaps stay gaps);
+           noise-<person>: repeat photos shot-NN. Both matched against trial-<person>/day-00.
+           _retired/: photos moved aside by Retake, with their analyses. Nothing is deleted
 results/   <set>/<stem>.json, <set>-split/<stem>-L.json. Git-ignored
 ```
 

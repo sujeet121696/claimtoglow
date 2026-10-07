@@ -11,7 +11,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from .config import DEFAULT_BASE_URL, load_env
+from .config import DEFAULT_BASE_URL, DEFAULT_KEY_VAR, load_env
 
 POLL_SECONDS = 2
 POLL_TIMEOUT_SECONDS = 180
@@ -32,11 +32,11 @@ class YouCam:
         self.base_url = base_url.rstrip("/")
 
     @classmethod
-    def from_env(cls):
+    def from_env(cls, key_var=DEFAULT_KEY_VAR):
         load_env()
-        api_key = os.environ.get("YOUCAM_API_KEY")
+        api_key = os.environ.get(key_var)
         if not api_key:
-            raise RuntimeError("Set YOUCAM_API_KEY in .env (copy .env.example).")
+            raise RuntimeError(f"Set {key_var} in .env (copy .env.example).")
         return cls(api_key, os.environ.get("YOUCAM_BASE_URL") or DEFAULT_BASE_URL)
 
     def _request(self, method, path, body=None):

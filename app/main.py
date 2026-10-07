@@ -7,33 +7,35 @@ Photos stay on this machine; the server is meant for localhost (and the Vite pro
 import hashlib
 import json
 import re
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
+from typing import Literal
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 from .analyzer import analyze_cached, cached_scores, mirror_halves, photo_files, result_dir
-from .config import NAME_RE, PHOTOS
+from .config import NAME_RE, PHOTOS, key_var_for, person_of
 from .noise import noise_rows, split_pairs
+from .trials import PERSON_RE, day_of, people, read_trial, retire, summary, write_trial
 from .youcam import YouCam, YouCamError
 
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
-REFERENCE = ("trial", "day-00")  # the day-0 photo every later capture is matched against
 
 app = FastAPI(title="Claim to Glow lab")
 PHOTOS.mkdir(exist_ok=True)
-_client = None
+_clients = {}
 
 
-def client() -> YouCam:
-    global _client
-    if _client is None:
+def client(set_name: str) -> YouCam:
+    var = key_var_for(set_name)
+    if var not in _clients:
         try:
-            _client = YouCam.from_env()
+            _clients[var] = YouCam.from_env(var)
         except RuntimeError as e:
             raise HTTPException(500, str(e))
-    return _client
+    return _clients[var]
 
 
 def set_dir(name: str) -> Path:
@@ -72,8 +74,19 @@ def photo_info(name: str, photo: Path, whole: dict, halves: dict) -> dict:
 
 
 def next_stem(name: str) -> str:
-    prefix = "day" if name == "trial" else "shot"
+    """Daily photos are named by days since the trial's start; other sets count up (shot-NN)."""
     taken = {p.stem for p in photo_files(set_dir(name))}
+    person = person_of(name)
+    if name.startswith("trial-") and person:
+        day = day_of(read_trial(person))
+        if day is not None:
+            if day < 0:
+                raise HTTPException(400, f"The trial starts on {read_trial(person)['start_date']}.")
+            stem = f"day-{day:02d}"
+            if stem in taken:
+                raise HTTPException(409, f"Today's check-in ({stem}) already exists. Use Retake on it first.")
+            return stem
+    prefix = "day" if name.startswith("trial") else "shot"
     n = 0
     while f"{prefix}-{n:02d}" in taken:
         n += 1
@@ -91,7 +104,11 @@ def list_sets():
 def get_set(name: str):
     whole = cached_scores(result_dir(name, False))
     halves = split_pairs(cached_scores(result_dir(name, True)))
-    return {"name": name, "photos": [photo_info(name, p, whole, halves) for p in photo_files(set_dir(name))]}
+    return {
+        "name": name,
+        "key_var": key_var_for(name),  # which account pays for analyses of this set (never the key itself)
+        "photos": [photo_info(name, p, whole, halves) for p in photo_files(set_dir(name))],
+    }
 
 
 @app.post("/api/sets/{name}/photos")
@@ -131,12 +148,51 @@ def analyze_photo(name: str, stem: str, split: bool = False):
     targets = mirror_halves(photo, out_dir / "images") if split else [photo]
     try:
         for target in targets:
-            analyze_cached(client(), target, out_dir)
+            analyze_cached(client(name), target, out_dir)
     except YouCamError as e:
         raise HTTPException(422, {"code": e.code, "message": e.message})
     except RuntimeError as e:
         raise HTTPException(502, str(e))
     return get_set(name)
+
+
+@app.post("/api/sets/{name}/photos/{stem}/gate")
+def save_gate(name: str, stem: str, gate: dict = Body(..., embed=True)):
+    """Store the capture-gate result for a photo copied in by hand (the gate runs in the browser)."""
+    photo = find_photo(name, stem)
+    meta = read_meta(photo) or {"sha256": sha256(photo), "source": "folder"}
+    meta["gate"] = gate
+    photo.with_suffix(".meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    return photo_info(name, photo, {}, {})
+
+
+@app.post("/api/sets/{name}/photos/{stem}/retire")
+def retire_photo(name: str, stem: str):
+    """Move a photo and its analyses to photos/_retired/ so it can be retaken. Nothing is deleted."""
+    return {"moved_to": retire(name, find_photo(name, stem))}
+
+
+class TrialFields(BaseModel):
+    product: str = ""
+    claim: str = ""
+    treated_side: Literal["L", "R"] = "L"
+    start_date: date | None = None
+    duration_days: int = 21
+
+
+@app.get("/api/people")
+def list_people():
+    return {"people": [summary(p, read_meta) for p in people()], "today": date.today().isoformat()}
+
+
+@app.put("/api/people/{person}")
+def save_person(person: str, fields: TrialFields):
+    if not PERSON_RE.match(person):
+        raise HTTPException(400, "Use lowercase letters, digits and dashes, e.g. 'sahni'.")
+    data = fields.model_dump()
+    data["start_date"] = fields.start_date.isoformat() if fields.start_date else None
+    write_trial(person, data)
+    return summary(person, read_meta)
 
 
 @app.get("/api/sets/{name}/noise")
@@ -145,13 +201,18 @@ def noise(name: str, split: bool = False):
     return {"rows": noise_rows(cached_scores(result_dir(name, split)), split)}
 
 
-@app.get("/api/reference")
-def reference():
-    """The day-0 trial photo and its capture metrics, used for the ghost overlay and matching."""
-    name, stem = REFERENCE
-    for p in photo_files(PHOTOS / name):
-        if p.stem == stem:
-            return {"url": f"/files/photos/{name}/{p.name}", "meta": read_meta(p)}
+@app.get("/api/sets/{name}/reference")
+def reference(name: str):
+    """The person's day-0 photo and its capture metrics, used for the ghost overlay and matching."""
+    set_dir(name)
+    person = person_of(name)
+    if not person:
+        return None
+    # Both trial-<person> and noise-<person> are matched against trial-<person>/day-00.
+    ref_set = f"trial-{person}"
+    for p in photo_files(PHOTOS / ref_set):
+        if p.stem == "day-00":
+            return {"set": ref_set, "url": f"/files/photos/{ref_set}/{p.name}", "meta": read_meta(p)}
     return None
 
 

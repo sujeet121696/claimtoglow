@@ -33,23 +33,40 @@
 **Setup**
 1. [x] Register on Devpost (submissions open Sep 29)
 2. [x] Create a YouCam API account via the India link: https://yce.makeupar.com/ai-api. 1,000 free units redeemed Oct 6, valid until Jan 4, 2027
-3. [ ] Share the hackathon on social media for bonus units (up to +1,000)
+3. [ ] Share the hackathon on social media for bonus units (500 per platform, up to +1,000)
+3a. [ ] Ask the organisers for extra test units (Devpost discussion or contact_event@PerfectCorp.com)
+3b. [ ] Teammates (Sahni, Suvaani) register on Devpost, join the team, and redeem their own YouCam codes.
+        Codes are per registrant and non-transferable; each key analyses only its owner's trial.
+        Team has 2 women, so it is eligible for the Women in Tech prize
 
 **Trial (before day 0)**
 4. [ ] Pick one product with a specific claim of **21 days or less**. Photograph the claim on the box
-   - Fallback (Oct 6): Ghar Soaps Magic Face Wash (saffron + lactic acid; "reduce tan, brightens, glow", no deadline, rinse-off). Use it if no dated leave-on claim by Oct 7
-4a. [ ] Split-face: pick the treated side (say, the side on the image's left) and keep it fixed.
+   - Candidates (Oct 6): **Demelan+ Cream** (leave-on; kojic acid, arbutin, glycolic acid; "even tone
+     over time") and **Ghar Soaps Magic Face Wash** (rinse-off; "reduce tan, brightens, glow"). Neither
+     gives a deadline, so the deadline is 21 days, labelled "set by tester"
+   - **Decided Oct 7:** 3 people, each a split-face trial. `trial-sujeet` and `trial-sahni`: Magic
+     Face Wash (treated half only). `trial-suvaani`: **Demelan+ Cream under the treated eye only**, for dark
+     circles; tracked concern `dark_circle_v2` (Suvaani scored 61.0 on Oct 6). The brand claims even tone
+     and brightening, not dark circles, so the verdict must say it was tested off-label. Glycolic acid
+     near the eyes: patch test, thin layer on the under-eye bone only, night only, stop on irritation. Treated side for everyone: **image left** (the person's right side).
+     Everyone consents to YouCam processing. Day 0 was Oct 7. Each person's details live in
+     `photos/trial-<person>/trial.json` (edit in the lab: Person → Edit)
+   - Cost (Oct 6 console): an SD analysis with 10 concerns costs **14 units**; a split-face photo costs
+     2 analyses. Same photo re-analysed gives identical scores, so all noise comes from capture
+   - Face wash trials track `radiance` and `texture` (all 3 faces already score 93–97 on `age_spot`)
+4a. [x] Split-face: treated side is image left for everyone, fixed for the whole trial.
        Apply only to that half, stopping at the nose line. Nose centred in frame for every photo
 5. [ ] Fix the setup: same spot, same time of day, phone on a stand, rear camera, no filters or
        beauty mode, face 60–80% of frame width, neutral face, mouth closed
-6. [ ] **Day-0 photo on Oct 7 (moved from Oct 3), before the first use**, then one photo every day into
-       `photos/trial/` named `day-00.jpg`, `day-01.jpg`, … Photos keep; they can be analysed later
+6. [ ] **Day-0 photo on Oct 7 (moved from Oct 3), before the first use**, then one photo every morning
+       (before any product, sunscreen on the whole face after). One set per person: `trial-<person>`,
+       e.g. `trial-sujeet`, named `day-00`, `day-01`, … automatically by the lab app
 
 **Noise test**
-7. [ ] In the same setup and sitting, take 10 more photos into `photos/noise-01/`. Step out of
-       frame and back between shots so each is a fresh capture
+7. [ ] In the same setup and sitting, take repeat photos into `noise-<person>` (10 for Sujeet, ≥5 for
+       the others). Step out of frame and back between shots ("Fresh shots" in the lab enforces it)
 8. [x] API tested Oct 6 on 2 faces (`photos/api-test/`): works, raw scores 0–100, higher looks better, `ui_score` differs a lot from raw. Face <60% width is rejected. Units per analysis: _pending (balance was 1,026)_
-8a. [ ] `python scripts/noise_test.py photos/noise-01 --split --limit 2`: does YouCam accept the
+8a. [ ] `python scripts/noise_test.py photos/noise-sujeet --split --limit 2`: does YouCam accept the
        mirrored half-faces? If yes, run the full `--split` set and record the `L-R` floor too
 9. [ ] Run the full noise test and record the noise floor per concern below
 10. [ ] **Go/no-go:** go if the claimed concern's noise floor is small next to a realistic change
@@ -66,7 +83,8 @@
 12. [x] Choose backend and web stack, and record them in `ARCHITECTURE.md` (Oct 6: FastAPI + React/Vite, as Ringproof)
 13. [x] Analyzer module with local result cache (`app/analyzer.py`, shared with the noise script)
 14. [ ] Analyse trial photos so far; confirm which direction of `raw_score` is "better" per concern
-15. [ ] Verdict engine with the noise-floor rule
+15. [ ] Verdict engine with the noise-floor rule (pure function, VISION D1)
+15a. [x] `trial.json` per trial: product, claim, treated side, start date (VISION D3). Lab is now organised by person: Today screen, person picker, day numbers from day 0, Retake
 16. [ ] Capture gate: brightness + face framing/pose (MediaPipe), day-0 ghost overlay
     - [x] Built in the lab app (`web/src/gate.ts`): Capture, Upload and Results screens. Checked on
           the 2 test photos via Upload; flags uneven light and off-centre nose correctly

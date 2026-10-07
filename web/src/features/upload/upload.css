@@ -1,0 +1,30 @@
+.uploader { display: grid; gap: var(--space-4); }
+
+.dropzone {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.dropzone:hover, .dropzone.dragging { border-color: var(--link); background: var(--note-bg); }
+
+.uploader-bar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); }
+
+.upload-list { display: grid; gap: var(--space-3); }
+.upload-item { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: var(--space-4); }
+.upload-item img { width: 140px; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius-sm); }
+.upload-body { min-width: 0; }
+.upload-title { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.upload-actions { display: flex; gap: var(--space-2); }
+.upload-actions input { width: 160px; }
+
+@media (max-width: 640px) {
+  .upload-item { grid-template-columns: 88px minmax(0, 1fr); }
+  .upload-item img { width: 88px; }
+}

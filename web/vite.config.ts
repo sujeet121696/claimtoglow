@@ -6,13 +6,14 @@ import { defineConfig } from "vite";
 // `npm run dev:phone` → https://<pc-ip>:5173 on the LAN, so a phone browser can use its camera
 export default defineConfig(({ mode }) => {
   const phone = mode === "phone";
+  const api = `http://127.0.0.1:${process.env.API_PORT ?? 8000}`;
   return {
     plugins: [react(), ...(phone ? [basicSsl()] : [])],
     server: {
       host: phone ? true : "localhost",
       proxy: {
-        "/api": "http://127.0.0.1:8000",
-        "/files": "http://127.0.0.1:8000",
+        "/api": api,
+        "/files": api,
       },
     },
   };

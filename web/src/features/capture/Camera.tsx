@@ -1,19 +1,24 @@
-// Live capture with the gate: the shutter only works while every check passes. Auto mode beeps a
-// 2-second countdown and shoots by itself, so a phone on a stand (rear camera) works hands-free.
-// "Fresh shots" makes you leave the frame between shots, which the noise test needs.
+// Live camera with the capture gate: the shutter only works while every check passes. Auto mode
+// beeps a 2-second countdown and shoots by itself, so a phone on a stand (rear camera) works
+// hands-free. "Fresh shots" makes you leave the frame between shots, which the noise test needs.
+// Self-contained: give it a set name and the treated side, and it saves gated photos there.
 import { useEffect, useRef, useState } from "react";
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
-import { api, type Side } from "./api";
-import { computeMetrics, evaluate, gateRecord, LIMITS, portraitCrop, samplePixels, type Check, type Crop, type Metrics } from "./gate";
-import { getLandmarker } from "./landmarker";
-import { beep, ChecksList, SET_RE, SetPicker, type RefState } from "./shared";
+import { api } from "../../api/client";
+import type { Side } from "../../api/types";
+import { ChecksList } from "../../components/ChecksList";
+import { Card } from "../../components/ui";
+import { useReference } from "../../hooks/useReference";
+import { beep } from "../../lib/beep";
+import { computeMetrics, evaluate, gateRecord, LIMITS, portraitCrop, samplePixels, type Check, type Crop, type Metrics } from "../../lib/gate";
+import { getLandmarker } from "../../lib/landmarker";
 
 const HOLD_MS = 2000;
 const DETECT_EVERY_MS = 100;
 
-type Props = { side: Side; reference: RefState; onSaved: () => void };
+type Props = { setName: string; side: Side; onSaved: () => void };
 
-export function CameraView({ side, reference, onSaved }: Props) {
+export function Camera({ setName, side, onSaved }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const viewRef = useRef<HTMLCanvasElement>(null);
   const sampleCanvas = useRef(document.createElement("canvas"));
@@ -21,9 +26,9 @@ export function CameraView({ side, reference, onSaved }: Props) {
   const [deviceId, setDeviceId] = useState("");
   const [running, setRunning] = useState(false);
   const [checks, setChecks] = useState<Check[]>([]);
-  const [setName, setSetName] = useState("trial");
+  const [reference, reloadReference] = useReference(setName);
   const [auto, setAuto] = useState(false);
-  const [fresh, setFresh] = useState(false);
+  const [fresh, setFresh] = useState(setName.startsWith("noise"));
   const [ghost, setGhost] = useState(true);
   const [steady, setSteady] = useState(false);
   const [status, setStatus] = useState("");
@@ -37,8 +42,6 @@ export function CameraView({ side, reference, onSaved }: Props) {
   });
   const opts = useRef({ auto, fresh, ghost, reference, side, setName, onSaved });
   opts.current = { auto, fresh, ghost, reference, side, setName, onSaved };
-
-  useEffect(() => setFresh(setName.startsWith("noise")), [setName]);
 
   function stop() {
     const v = videoRef.current;
@@ -168,7 +171,7 @@ export function CameraView({ side, reference, onSaved }: Props) {
     // Guides are symmetric, so mirroring doesn't move them.
     const ok = L.checks.length > 0 && L.checks.every((c) => c.pass);
     ctx.lineWidth = 2;
-    ctx.strokeStyle = ok ? "#3ddc84" : "#ffb020";
+    ctx.strokeStyle = ok ? "#00c853" : "#ffb020"; // brand green when every check passes
     line(ctx, dw / 2, 0, dw / 2, dh);
     ctx.setLineDash([6, 6]);
     ctx.strokeStyle = "rgba(255,255,255,0.7)";
@@ -204,7 +207,6 @@ export function CameraView({ side, reference, onSaved }: Props) {
     const o = opts.current;
     const v = videoRef.current;
     if (!v || !L.crop || !L.metrics || L.capturing) return;
-    if (!SET_RE.test(o.setName)) return setStatus("Pick a valid set name first");
     L.capturing = true;
     try {
       const { crop } = L;
@@ -228,6 +230,7 @@ export function CameraView({ side, reference, onSaved }: Props) {
         msg += " · step out of frame, then come back";
       }
       setStatus(msg);
+      if (photo.stem === "day-00") reloadReference();
       o.onSaved();
     } catch (e) {
       setStatus(`Save failed: ${(e as Error).message}`);
@@ -238,50 +241,49 @@ export function CameraView({ side, reference, onSaved }: Props) {
   }
 
   return (
-    <section className="capture">
+    <div className="capture">
       <div className="stage">
         <video ref={videoRef} playsInline muted className="hidden-video" />
         <canvas ref={viewRef} className="view" />
         {!running && (
           <div className="stage-empty">
             <button className="primary" onClick={() => start()}>Start camera</button>
+            <p className="small">Use the rear camera on a stand for the best photos.</p>
             {error && <p className="error">{error}</p>}
           </div>
         )}
       </div>
 
-      <aside className="panel">
-        <div className="row wrap">
-          <SetPicker value={setName} onChange={setSetName} />
+      <div className="capture-side">
+        <Card title="Checks">
+          <ChecksList checks={running ? checks : []} empty={running ? "Waiting for a face…" : "Start the camera to see the checks."} />
+          <div className="shutter">
+            <button className="primary" disabled={!running || !steady} onClick={() => capture()}>
+              {steady ? "Capture" : "Hold still…"}
+            </button>
+            <button className="ghost" disabled={!running} onClick={() => capture(true)} title="Saves even if checks fail; the photo is marked as failing the gate">
+              Capture anyway
+            </button>
+          </div>
+          {status && <p className="status" role="status">{status}</p>}
+        </Card>
+
+        <Card title="Options">
           {devices.length > 1 && (
-            <label className="field">
-              Camera
+            <label className="option">
+              <span>Camera</span>
               <select value={deviceId} onChange={(e) => start(e.target.value)}>
                 {devices.map((d, i) => <option key={d.deviceId} value={d.deviceId}>{d.label || `Camera ${i + 1}`}</option>)}
               </select>
             </label>
           )}
-        </div>
-        <div className="row wrap toggles">
-          <label><input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-capture</label>
-          <label><input type="checkbox" checked={fresh} onChange={(e) => setFresh(e.target.checked)} /> Fresh shots (leave frame between)</label>
-          <label><input type="checkbox" checked={ghost} onChange={(e) => setGhost(e.target.checked)} disabled={!reference.img} /> Day-0 ghost</label>
-        </div>
-
-        <ChecksList checks={running ? checks : []} />
-
-        <div className="row">
-          <button className="primary" disabled={!running || !steady} onClick={() => capture()}>
-            {steady ? "Capture" : "Hold still…"}
-          </button>
-          <button className="ghost" disabled={!running} onClick={() => capture(true)} title="Saves even if checks fail; the photo is marked as failing the gate">
-            Capture anyway
-          </button>
-        </div>
-        {status && <p className="status">{status}</p>}
-        {!reference.ref && <p className="muted small">No day-0 photo yet. The first photo saved to <b>trial</b> becomes day-00 and the reference for every later check-in.</p>}
-      </aside>
-    </section>
+          <label className="option"><input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-capture with countdown</label>
+          <label className="option"><input type="checkbox" checked={fresh} onChange={(e) => setFresh(e.target.checked)} /> Step out of frame between shots</label>
+          <label className="option"><input type="checkbox" checked={ghost} onChange={(e) => setGhost(e.target.checked)} disabled={!reference.img} /> Show day-0 ghost</label>
+          {!reference.ref && <p className="muted small">No day-0 photo yet: the first daily check-in becomes day 0, the reference for every later photo.</p>}
+        </Card>
+      </div>
+    </div>
   );
 }
 

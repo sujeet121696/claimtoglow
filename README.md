@@ -31,7 +31,7 @@ only when the evidence is strong enough to say so.
 ## Run locally
 
 ```sh
-cp .env.example .env                      # add your YouCam API key
+cp .env.example .env                      # add your YouCam API key (and teammates' keys)
 python -m venv .venv
 .venv/Scripts/pip install -r requirements.txt   # macOS/Linux: .venv/bin/pip
 .venv/Scripts/python -m uvicorn app.main:app --port 8000
@@ -41,7 +41,9 @@ npm run dev                               # http://localhost:5173 (laptop camera
 npm run dev:phone                         # https://<pc-ip>:5173 for a phone on the same Wi-Fi
 ```
 
-The lab app has three screens:
+The lab app is organised by person (Me / Her / She, or ＋ Add person). Screens:
+
+- **Today:** for each person, today's photo, repeat photos and the day-0 check.
 
 - **Capture:** live camera with the capture gate. The shutter works only when every check passes.
   Auto-capture beeps a countdown for a phone on a stand.
@@ -55,9 +57,9 @@ Photos go to `photos/<set>/` and results to `results/`. Both stay out of git.
 Before trusting any "−18%", measure how much scores move when nothing changed:
 
 ```sh
-.venv/Scripts/python scripts/noise_test.py photos/noise-01 --limit 1   # one photo first
-.venv/Scripts/python scripts/noise_test.py photos/noise-01             # the full set (~10 photos)
-.venv/Scripts/python scripts/noise_test.py photos/noise-01 --split     # split-face halves
+.venv/Scripts/python scripts/noise_test.py photos/noise-sujeet --limit 1   # one photo first
+.venv/Scripts/python scripts/noise_test.py photos/noise-sujeet             # the full set (~10 photos)
+.venv/Scripts/python scripts/noise_test.py photos/noise-sujeet --split     # split-face halves
 ```
 
 See [`docs/TASKS.md`](docs/TASKS.md) for how to take the photos.
@@ -71,6 +73,7 @@ See [`docs/TASKS.md`](docs/TASKS.md) for how to take the photos.
 | [`docs/RULES.md`](docs/RULES.md) | Coding and workflow rules |
 | [`docs/DESIGN.md`](docs/DESIGN.md) | UI/UX direction |
 | [`docs/TASKS.md`](docs/TASKS.md) | Build checklist and progress |
+| [`docs/VISION.md`](docs/VISION.md) | Post-hackathon AI agent and scaling decisions |
 
 ## License
 
