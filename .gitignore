@@ -7,3 +7,4 @@ node_modules/
 .venv/
 web/dist/
 web/public/mediapipe/
+.lab_token

@@ -1,7 +1,7 @@
 // Client for the local API (app/main.py), proxied by Vite. One function per endpoint, so each maps
 // 1:1 to a future agent tool (VISION D1, D2).
 import type { GateRecord } from "../lib/gate";
-import type { NoiseRow, Person, Photo, PhotoMeta, PhotoSet, SetSummary, TrialFields } from "./types";
+import type { ClaimSuggestion, NoiseRow, Person, Photo, PhotoMeta, PhotoSet, SetSummary, TrialFields } from "./types";
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init);
@@ -21,6 +21,10 @@ const json = (method: string, data: unknown): RequestInit => ({
 
 export const api = {
   people: () => call<{ people: Person[]; today: string }>("/api/people"),
+  unlock: (token: string) => call<{ unlocked: boolean }>("/api/unlock", json("POST", { token })),
+  parseClaim: (claim: string, product: string) =>
+    call<ClaimSuggestion>("/api/claims/parse", json("POST", { claim, product })),
+  labLink: () => call<{ wifi: string; public: string | null }>("/api/lab-link"),
   savePerson: (person: string, fields: TrialFields) => call<Person>(`/api/people/${person}`, json("PUT", fields)),
 
   sets: () => call<{ sets: SetSummary[] }>("/api/sets").then((r) => r.sets),

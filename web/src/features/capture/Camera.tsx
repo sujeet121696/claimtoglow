@@ -1,5 +1,5 @@
 // Live camera with the capture gate: the shutter only works while every check passes. Auto mode
-// beeps a 2-second countdown and shoots by itself, so a phone on a stand (rear camera) works
+// beeps a 2-second countdown and shoots by itself, so a phone on a stand works
 // hands-free. "Fresh shots" makes you leave the frame between shots, which the noise test needs.
 // Self-contained: give it a set name and the treated side, and it saves gated photos there.
 import { useEffect, useRef, useState } from "react";
@@ -10,15 +10,22 @@ import { ChecksList } from "../../components/ChecksList";
 import { Card } from "../../components/ui";
 import { useReference } from "../../hooks/useReference";
 import { beep } from "../../lib/beep";
+import { loadPref, savePref } from "../../lib/storage";
 import { computeMetrics, evaluate, gateRecord, LIMITS, portraitCrop, samplePixels, type Check, type Crop, type Metrics } from "../../lib/gate";
 import { getLandmarker } from "../../lib/landmarker";
 
 const HOLD_MS = 2000;
 const DETECT_EVERY_MS = 100;
 
-type Props = { setName: string; side: Side; onSaved: () => void };
+// Short names for the check chips on the video.
+const CHIP: Record<string, string> = {
+  face: "Face", size: "Size", bounds: "In frame", centre: "Centre", straight: "Straight", tilt: "Chin",
+  expression: "Neutral", light: "Light", even: "Even light", resolution: "Sharp", camera: "Camera", match: "Day 0",
+};
 
-export function Camera({ setName, side, onSaved }: Props) {
+type Props = { setName: string; side: Side; title?: string; onSaved: () => void };
+
+export function Camera({ setName, side, title, onSaved }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const viewRef = useRef<HTMLCanvasElement>(null);
   const sampleCanvas = useRef(document.createElement("canvas"));
@@ -27,12 +34,15 @@ export function Camera({ setName, side, onSaved }: Props) {
   const [running, setRunning] = useState(false);
   const [checks, setChecks] = useState<Check[]>([]);
   const [reference, reloadReference] = useReference(setName);
-  const [auto, setAuto] = useState(false);
+  // Hands-free by default on phones (touch screens), where the phone sits on a stand.
+  const [auto, setAuto] = useState(() => window.matchMedia("(pointer: coarse)").matches);
   const [fresh, setFresh] = useState(setName.startsWith("noise"));
   const [ghost, setGhost] = useState(true);
   const [steady, setSteady] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [leaving, setLeaving] = useState(false); // waiting for the person to step out of frame
+  const [justSaved, setJustSaved] = useState(""); // brief confirmation on the video
 
   // Mutable state read by the animation loop.
   const live = useRef({
@@ -50,14 +60,23 @@ export function Camera({ setName, side, onSaved }: Props) {
     setRunning(false);
   }
 
+  /** The camera to use: the one day 0 was taken with, else the last one used here, else the selfie camera. */
+  async function preferredDevice(): Promise<string | undefined> {
+    const cams = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput" && d.deviceId);
+    const sameAsDay0 = reference.device ? cams.find((d) => d.label === reference.device) : undefined;
+    const last = cams.find((d) => d.deviceId === loadPref("cameraId"));
+    return (sameAsDay0 ?? last)?.deviceId;
+  }
+
   async function start(id?: string) {
     stop();
     setError("");
     try {
+      const deviceId = id ?? (await preferredDevice());
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
-          ...(id ? { deviceId: { exact: id } } : { facingMode: "user" }),
+          ...(deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "user" }),
           width: { ideal: 1920 },
           height: { ideal: 1080 },
         },
@@ -70,6 +89,7 @@ export function Camera({ setName, side, onSaved }: Props) {
       live.current.mirror = settings.facingMode !== "environment"; // selfie preview mirrors; saved photos never do
       live.current.deviceLabel = track.label;
       setDeviceId(settings.deviceId ?? "");
+      if (settings.deviceId) savePref("cameraId", settings.deviceId);
       setDevices((await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput"));
       await getLandmarker("VIDEO");
       setRunning(true);
@@ -79,6 +99,33 @@ export function Camera({ setName, side, onSaved }: Props) {
   }
 
   useEffect(() => stop, []);
+
+  // Start by itself once camera access was granted before, after day 0 is known (to pick its camera).
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (autoStarted.current || !reference.loaded) return;
+    autoStarted.current = true;
+    navigator.permissions?.query({ name: "camera" as PermissionName })
+      .then((p) => { if (p.state === "granted") void start(); })
+      .catch(() => { /* permissions API unavailable: wait for the Start button */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reference.loaded]);
+
+  // Keep the screen on while the camera is open, so a phone on a stand doesn't dim mid-countdown.
+  useEffect(() => {
+    if (!running || !("wakeLock" in navigator)) return;
+    let lock: WakeLockSentinel | null = null;
+    navigator.wakeLock.request("screen").then((l) => (lock = l)).catch(() => {});
+    return () => { void lock?.release(); };
+  }, [running]);
+
+  // On a phone the live camera takes the whole screen, so nothing scrolls while posing.
+  useEffect(() => {
+    if (!running || !window.matchMedia("(max-width: 860px)").matches) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [running]);
 
   useEffect(() => {
     if (!running) return;
@@ -123,6 +170,7 @@ export function Camera({ setName, side, onSaved }: Props) {
         L.noFaceSince ||= now;
         if (now - L.noFaceSince > 800) {
           L.awaitingLeave = false;
+          setLeaving(false);
           setStatus((s) => s.replace(/ · step out.*$/, "") + " · ready for the next shot");
         }
       } else {
@@ -230,9 +278,12 @@ export function Camera({ setName, side, onSaved }: Props) {
       if (o.fresh) {
         L.awaitingLeave = true;
         L.noFaceSince = 0;
+        setLeaving(true);
         msg += " · step out of frame, then come back";
       }
       setStatus(msg);
+      setJustSaved(`Saved ${photo.stem} ✓`);
+      setTimeout(() => setJustSaved(""), 2000);
       if (photo.stem === "day-00") reloadReference();
       o.onSaved();
     } catch (e) {
@@ -243,17 +294,52 @@ export function Camera({ setName, side, onSaved }: Props) {
     }
   }
 
+  // The one thing to do next, shown large on the video.
+  const failing = checks.find((c) => !c.pass);
+  const hint = justSaved
+    ? { text: justSaved, tone: "good" }
+    : leaving
+      ? { text: checks[0]?.id === "face" ? "Now come back into the frame" : "Step out of the frame", tone: "info" }
+      : !checks.length ? { text: "Looking for your face…", tone: "info" }
+      : failing ? { text: failing.hint, tone: "bad" }
+      : { text: auto ? "Hold still…" : steady ? "Looks good: tap the shutter" : "Hold still…", tone: "good" };
+
   return (
-    <div className="capture">
+    <div className={`capture ${running ? "live" : ""}`}>
       <div className="stage">
         <video ref={videoRef} playsInline muted className="hidden-video" />
         <canvas ref={viewRef} className="view" />
         {!running && (
           <div className="stage-empty">
             <button className="primary" onClick={() => start()}>Start camera</button>
-            <p className="small">Use the rear camera on a stand for the best photos.</p>
+            <p className="small">Use the same camera, spot and light every day.</p>
             {error && <p className="error">{error}</p>}
           </div>
+        )}
+
+        {running && (
+          <>
+            <div className="ov-top">
+              <span>{title}</span>
+              <button className="ov-close" aria-label="Close camera" onClick={stop}>✕</button>
+            </div>
+
+            <div className={`ov-hint ${hint.tone}`} role="status">{hint.text}</div>
+
+            <div className="ov-bottom">
+              <div className="chips">
+                {checks.map((c) => (
+                  <span key={c.id} className={`chip ${c.pass ? "pass" : "fail"}`}>{c.pass ? "✓" : "✗"} {CHIP[c.id] ?? c.label}</span>
+                ))}
+              </div>
+              <div className="ov-controls">
+                <button className={`ov-toggle ${auto ? "on" : ""}`} aria-pressed={auto} onClick={() => setAuto(!auto)}>Auto</button>
+                <button className="shutter-btn" aria-label="Capture" disabled={!steady || leaving} onClick={() => capture()} />
+                <button className={`ov-toggle ${fresh ? "on" : ""}`} aria-pressed={fresh} onClick={() => setFresh(!fresh)}>Step out</button>
+              </div>
+              <button className="ov-anyway" disabled={leaving} onClick={() => capture(true)}>Capture anyway</button>
+            </div>
+          </>
         )}
       </div>
 

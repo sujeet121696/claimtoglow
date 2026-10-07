@@ -16,6 +16,7 @@ type Store = {
   refresh: () => void;
   editing: Editing;
   edit: (p: Editing) => void;
+  locked: string | null; // why this device is locked (no or wrong lab token), null when unlocked
 };
 
 const StoreContext = createContext<Store | null>(null);
@@ -26,9 +27,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [personId, setPersonId] = useState(() => loadPref("person"));
   const [version, setVersion] = useState(0);
   const [editing, edit] = useState<Editing>(null);
+  const [locked, setLocked] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
-    api.people().then((r) => { setPeople(r.people); setToday(r.today); }).catch(() => {});
+    api.people()
+      .then((r) => { setPeople(r.people); setToday(r.today); setLocked(null); })
+      .catch((e: Error) => setLocked(e.message.startsWith("Locked") ? e.message : null));
     setVersion((v) => v + 1);
   }, []);
   useEffect(refresh, [refresh]);
@@ -37,8 +41,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const person = people.find((p) => p.person === personId) ?? people[0];
 
   const value = useMemo(
-    () => ({ people, today, person, selectPerson, version, refresh, editing, edit }),
-    [people, today, person, selectPerson, version, refresh, editing],
+    () => ({ people, today, person, selectPerson, version, refresh, editing, edit, locked }),
+    [people, today, person, selectPerson, version, refresh, editing, locked],
   );
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

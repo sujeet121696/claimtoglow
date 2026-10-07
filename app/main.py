@@ -1,30 +1,85 @@
 """Local API for the trial lab: save gated photos, analyse them, read scores and noise.
 
 Run: .venv/Scripts/python -m uvicorn app.main:app --port 8000
-Photos stay on this machine; the server is meant for localhost (and the Vite proxy) only.
+Photos stay on this machine. The server listens on localhost only; other devices reach it through
+the Vite proxy (Wi-Fi) or a Cloudflare Tunnel, and need the lab token (see lock_remote_devices).
 """
 
 import hashlib
+import ipaddress
 import json
 import re
+import secrets
+import socket
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Literal
 
-from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Body, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .analyzer import analyze_cached, cached_scores, mirror_halves, photo_files, result_dir
-from .config import NAME_RE, PHOTOS, key_var_for, person_of
+from .analyzer import DEFAULT_ACTIONS, analyze_cached, cached_scores, mirror_halves, photo_files, result_dir
+from .claim import parse_claim
+from .config import NAME_RE, PHOTOS, WEB_DIST, key_var_for, lab_token, person_of, public_url
+from .llm import LLMError
 from .noise import noise_rows, split_pairs
-from .trials import PERSON_RE, day_of, people, read_trial, retire, summary, write_trial
+from .trials import PERSON_RE, day_of, people, read_trial, retire, retire_stale_results, summary, trial_verdict, write_trial
 from .youcam import YouCam, YouCamError
 
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 
 app = FastAPI(title="Claim to Glow lab")
 PHOTOS.mkdir(exist_ok=True)
+LAB_PORT = 5173  # where Vite serves the lab (npm run dev / dev:phone)
+
+
+PRIVATE_PATHS = ("/api/", "/files/")  # the app shell is public; data and photos are not
+OPEN_PATHS = ("/api/unlock",)  # how a locked device gets the token cookie
+TOKEN_COOKIE = "lab_token"
+
+
+def token_ok(token: str) -> bool:
+    return secrets.compare_digest(token.encode(), lab_token().encode())
+
+
+def client_ip(request: Request) -> str:
+    """The real client: Vite's proxy and Cloudflare both append it as the last X-Forwarded-For entry."""
+    forwarded = request.headers.get("x-forwarded-for")
+    return forwarded.split(",")[-1].strip() if forwarded else (request.client.host if request.client else "")
+
+
+def is_local(request: Request) -> bool:
+    """A request from this PC. Tunnel traffic also reaches us from localhost (cloudflared), so
+    anything carrying Cloudflare's Cf-Connecting-IP header is remote, whatever its address."""
+    if "cf-connecting-ip" in request.headers:
+        return False
+    try:
+        return ipaddress.ip_address(client_ip(request).removeprefix("::ffff:")).is_loopback
+    except ValueError:
+        return False
+
+
+@app.middleware("http")
+async def lock_remote_devices(request: Request, call_next):
+    """Photos are faces and analyses cost units: any device other than this PC (phone on Wi-Fi,
+    or a teammate through the tunnel) needs the lab token, which it gets once from the lab link."""
+    private = request.url.path.startswith(PRIVATE_PATHS)
+    if private and request.url.path not in OPEN_PATHS and not is_local(request):
+        token = request.cookies.get(TOKEN_COOKIE, "")
+        if not token_ok(token):
+            reason = "has an old or wrong lab link" if token else "hasn't opened the lab link yet"
+            return JSONResponse(
+                {"detail": f"Locked: this device {reason}. On the PC open Today → “Open on phone”, then scan the code or open the copied link."},
+                status_code=401, headers={"Cache-Control": "private, no-store"},
+            )
+    response = await call_next(request)
+    if private:
+        response.headers["Cache-Control"] = "private, no-store"  # Cloudflare and browsers never keep faces or scores
+    return response
+
+
 _clients = {}
 
 
@@ -130,6 +185,7 @@ async def upload_photo(name: str, file: UploadFile = File(...), stem: str = Form
     if not data or len(data) > MAX_UPLOAD_BYTES:
         raise HTTPException(400, "Empty or too large file")
     folder.mkdir(parents=True, exist_ok=True)
+    retire_stale_results(name, stem)
     photo = folder / f"{stem}{ext}"
     photo.write_bytes(data)
 
@@ -148,7 +204,10 @@ def analyze_photo(name: str, stem: str, split: bool = False):
     """Whole-face or split-face analysis. Cached results are returned without calling YouCam."""
     photo = find_photo(name, stem)
     out_dir = result_dir(name, split)
-    targets = mirror_halves(photo, out_dir / "images") if split else [photo]
+    try:
+        targets = mirror_halves(photo, out_dir / "images") if split else [photo]
+    except OSError as e:
+        raise HTTPException(422, f"Could not read {photo.name} as an image: {e}")
     try:
         for target in targets:
             analyze_cached(client(name), target, out_dir)
@@ -178,14 +237,70 @@ def retire_photo(name: str, stem: str):
 class TrialFields(BaseModel):
     product: str = ""
     claim: str = ""
+    notes: str = ""
     treated_side: Literal["L", "R"] = "L"
     start_date: date | None = None
     duration_days: int = 21
+    concerns: list[Literal[tuple(DEFAULT_ACTIONS)]] = []  # what the claim says will change
+
+
+class Unlock(BaseModel):
+    token: str
+
+
+@app.post("/api/unlock")
+def unlock(body: Unlock, request: Request):
+    """Turns the token from a lab link into a cookie set by the server: phone browsers keep it more
+    reliably than one set by page script, and HttpOnly keeps it away from scripts."""
+    if not token_ok(body.token):
+        raise HTTPException(403, "This lab link is old or wrong. Copy it again from “Open on phone” on the PC.")
+    response = JSONResponse({"unlocked": True})
+    https = request.headers.get("x-forwarded-proto", request.url.scheme) == "https"
+    response.set_cookie(TOKEN_COOKIE, body.token, max_age=365 * 24 * 3600, httponly=True, secure=https, samesite="lax")
+    return response
+
+
+@app.get("/api/lab-link")
+def lab_link():
+    """Links that open and unlock the lab on another device (shown as a QR code): `wifi` for a
+    phone on the same Wi-Fi (npm run dev:phone), `public` through the Cloudflare Tunnel when set."""
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        try:
+            s.connect(("10.255.255.255", 1))  # no packet is sent; this only picks the LAN interface
+            ip = s.getsockname()[0]
+        except OSError:
+            ip = "127.0.0.1"
+    unlock = f"/?token={lab_token()}#/capture"
+    public = public_url()
+    return {"wifi": f"https://{ip}:{LAB_PORT}{unlock}", "public": f"{public}{unlock}" if public else None}
 
 
 @app.get("/api/people")
 def list_people():
     return {"people": [summary(p, read_meta) for p in people()], "today": date.today().isoformat()}
+
+
+class ClaimText(BaseModel):
+    claim: str
+    product: str = ""
+
+
+@app.post("/api/claims/parse")
+def claims_parse(body: ClaimText):
+    """Claim agent: suggests the concerns and deadline a claim promises (a person confirms them)."""
+    if not body.claim.strip():
+        raise HTTPException(400, "Write the claim first.")
+    try:
+        return parse_claim(body.claim, body.product)
+    except LLMError as e:
+        raise HTTPException(502, str(e))
+
+
+@app.get("/api/people/{person}/verdict")
+def person_verdict(person: str):
+    if person not in people():
+        raise HTTPException(404, f"No trial for {person!r}")
+    return trial_verdict(person)
 
 
 @app.put("/api/people/{person}")
@@ -220,3 +335,8 @@ def reference(name: str):
 
 
 app.mount("/files/photos", StaticFiles(directory=PHOTOS), name="photos")
+
+# The built web app (npm run build), so one server on one port can sit behind the tunnel.
+# Mounted last: every /api and /files route above wins.
+if WEB_DIST.is_dir():
+    app.mount("/", StaticFiles(directory=WEB_DIST, html=True), name="web")

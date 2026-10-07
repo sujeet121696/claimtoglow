@@ -82,3 +82,7 @@ thead th { color: var(--muted); font-weight: 600; }
   .topbar { gap: var(--space-2); }
   .topbar .person-picker { margin-left: 0; }
 }
+
+.lock-screen { max-width: 520px; margin: var(--space-6) auto; }
+.lock-screen h2 { margin: 0 0 var(--space-2); font-size: 18px; }
+.lock-form { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: end; margin-top: var(--space-3); }

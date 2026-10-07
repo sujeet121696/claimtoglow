@@ -33,6 +33,8 @@ export type Person = {
   person: string;
   product: string;
   claim: string;
+  concerns: string[];
+  notes: string;
   treated_side: Side;
   start_date: string | null;
   duration_days: number;
@@ -42,7 +44,12 @@ export type Person = {
   today_done: boolean;
   noise_count: number;
   noise_target: number;
-  day0: { url: string; gate_passed: boolean | null; failed: string[] } | null;
+  day0: { url: string; saved_at: string | null; gate_passed: boolean | null; failed: string[] } | null;
+  verdict: { status: VerdictStatus; reason: string };
 };
 
-export type TrialFields = Pick<Person, "product" | "claim" | "treated_side" | "start_date" | "duration_days">;
+export type VerdictStatus = "met" | "not met" | "not enough evidence";
+
+export type ClaimSuggestion = { concerns: string[]; deadline_days: number | null; rationale: string; model: string };
+
+export type TrialFields = Pick<Person, "product" | "claim" | "concerns" | "notes" | "treated_side" | "start_date" | "duration_days">;

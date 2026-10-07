@@ -11,9 +11,10 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), ...(phone ? [basicSsl()] : [])],
     server: {
       host: phone ? true : "localhost",
+      // xfwd passes the real client address on, so the API can tell this PC from the phone.
       proxy: {
-        "/api": api,
-        "/files": api,
+        "/api": { target: api, xfwd: true },
+        "/files": { target: api, xfwd: true },
       },
     },
   };

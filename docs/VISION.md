@@ -43,6 +43,7 @@ verdict. Those are pure functions anyone can re-run from the receipt.
 | D7 | **Budget-aware measuring:** analyse checkpoints, not every photo; photos are always kept | 14 units per analysis, ×2 for split-face | Already the hackathon plan (day 0, 7, 14, 21) |
 | D8 | **Verified tier = in-app capture only.** Uploaded photos are allowed but never count toward product evidence | Stops cherry-picked or edited photos from polluting pooled results | Already recorded per photo (`meta.source`, gate result, hash) |
 | D9 | **Privacy by design:** explicit consent per participant, delete on request, face photos used for nothing else, retention limits. Follows India's DPDP Act | Face photos are sensitive personal data; trust is the product | Photos stay local and out of git (already true) |
+| D10 | **Hosting follows the data:** the lab PC behind a Cloudflare Tunnel + Access now; a cloud server with object storage (D4) only from P1 | Photos never leave the PC during the hackathon; no server to run or secure | One FastAPI process serves API + built app, so moving it to a server later is a deploy, not a rewrite |
 
 ## 4. Phases
 
@@ -73,4 +74,4 @@ verdict. Those are pure functions anyone can re-run from the receipt.
 ## 7. Not now
 
 Accounts, payments, a database, a mobile app, the MCP server, WhatsApp. The hackathon build only
-has to respect D1–D9 so none of this needs a rewrite later.
+has to respect D1–D10 so none of this needs a rewrite later.

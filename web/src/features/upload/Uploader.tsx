@@ -6,7 +6,7 @@ import type { Side } from "../../api/types";
 import { ChecksList } from "../../components/ChecksList";
 import { Badge, Card } from "../../components/ui";
 import { useReference } from "../../hooks/useReference";
-import { gateImage, type GateRecord } from "../../lib/gate";
+import { gateImage, referenceFrom, type GateRecord } from "../../lib/gate";
 import { getLandmarker } from "../../lib/landmarker";
 
 type Item = { id: number; file: File; url: string; stem: string; gate?: GateRecord; error?: string; saved?: string };
@@ -35,10 +35,11 @@ export function Uploader({ setName, side, onSaved }: Props) {
     });
     setItems((xs) => [...added, ...xs]);
     const landmarker = await getLandmarker("IMAGE");
+    const ref = referenceFrom((await api.reference(setName).catch(() => null))?.meta ?? null);
     for (const item of added) {
       try {
         const bitmap = await createImageBitmap(item.file, { imageOrientation: "from-image" });
-        patch(item.id, { gate: gateImage(landmarker, bitmap, reference.ref, canvas.current) });
+        patch(item.id, { gate: gateImage(landmarker, bitmap, ref, canvas.current) });
         bitmap.close();
       } catch (e) {
         patch(item.id, { error: (e as Error).message });
@@ -72,7 +73,7 @@ export function Uploader({ setName, side, onSaved }: Props) {
         <input type="file" accept="image/jpeg,image/png" multiple onChange={(e) => addFiles(e.target.files)} hidden />
         <strong>Drop photos here or click to choose</strong>
         <span className="muted small">
-          Original files from the rear camera (not WhatsApp-compressed). Checked against day 0{reference.ref ? "" : " once it exists"}.
+          Original files from the same camera as day 0 (not WhatsApp-compressed). Checked against day 0{reference.ref ? "" : " once it exists"}.
         </span>
       </label>
 

@@ -26,7 +26,7 @@ Skin apps tell you your score. Claim to Glow tells you whether the product kept 
 only when the evidence is strong enough to say so.
 
 > Built for the **YouCam API Skin AI & eCommerce VTO Hackathon** by Perfect Corp.
-> Status: **early build** (capture lab and noise test). Deadline: Nov 2, 2026.
+> Status: **trials running** since Oct 7 (capture lab and noise test done). Deadline: Nov 2, 2026.
 
 ## Run locally
 
@@ -38,13 +38,12 @@ python -m venv .venv
 
 cd web && npm install                     # also fetches the MediaPipe model
 npm run dev                               # http://localhost:5173 (laptop camera)
-npm run dev:phone                         # https://<pc-ip>:5173 for a phone on the same Wi-Fi
+npm run dev:phone                         # phone on the same Wi-Fi: Today → "Open on phone" → scan the QR
 ```
 
-The lab app is organised by person (Me / Her / She, or ＋ Add person). Screens:
+The lab app is organised by person (one trial each; ＋ Add person on Today). Screens:
 
 - **Today:** for each person, today's photo, repeat photos and the day-0 check.
-
 - **Capture:** live camera with the capture gate. The shutter works only when every check passes.
   Auto-capture beeps a countdown for a phone on a stand.
 - **Upload:** runs the same gate on photos from the phone's camera app.
@@ -52,17 +51,66 @@ The lab app is organised by person (Me / Her / She, or ＋ Add person). Screens:
 
 Photos go to `photos/<set>/` and results to `results/`. Both stay out of git.
 
+## Open it from anywhere (Cloudflare Tunnel)
+
+Teammates can take their daily photos from home. The lab still runs on this PC, photos stay here,
+and Cloudflare only forwards the traffic. Needs a domain on Cloudflare (here `kharidwise.com`).
+
+**Once:**
+
+```sh
+cloudflared tunnel login                                      # browser: pick the domain
+cloudflared tunnel create claimtoglow
+```
+
+Create `~/.cloudflared/claimtoglow.yml` (its own file, so another tunnel's `config.yml` isn't used
+by mistake):
+
+```yaml
+tunnel: <tunnel id from create>
+credentials-file: C:\Users\<you>\.cloudflared\<tunnel id>.json
+ingress:
+  - hostname: claimtoglow.kharidwise.com
+    service: http://localhost:8000
+  - service: http_status:404
+```
+
+```sh
+cloudflared --config ~/.cloudflared/claimtoglow.yml tunnel route dns --overwrite-dns claimtoglow claimtoglow.kharidwise.com
+```
+
+Then, in the Cloudflare dashboard → Zero Trust → Access → Applications, add a **self-hosted** app for
+`claimtoglow.kharidwise.com` with an **Allow** policy listing only the team's emails. Add
+`PUBLIC_URL=https://claimtoglow.kharidwise.com` to `.env`.
+
+**Each time:**
+
+```sh
+cd web && npm run build                                       # after any web change
+.venv/Scripts/python -m uvicorn app.main:app --port 8000      # serves the API and the built app
+cloudflared --config ~/.cloudflared/claimtoglow.yml tunnel run
+```
+
+Share the lab: Today → "Open on phone" → **Anywhere** → scan or Copy link. Two locks protect it:
+Cloudflare Access (team emails only) and the lab token in that link.
+
 ## Noise test
 
 Before trusting any "−18%", measure how much scores move when nothing changed:
 
 ```sh
 .venv/Scripts/python scripts/noise_test.py photos/noise-sujeet --limit 1   # one photo first
-.venv/Scripts/python scripts/noise_test.py photos/noise-sujeet             # the full set (~10 photos)
+.venv/Scripts/python scripts/noise_test.py photos/noise-sujeet             # the full set (≥5 photos)
 .venv/Scripts/python scripts/noise_test.py photos/noise-sujeet --split     # split-face halves
 ```
 
 See [`docs/TASKS.md`](docs/TASKS.md) for how to take the photos.
+
+## Tests
+
+```sh
+.venv/Scripts/python -m unittest discover tests
+```
 
 ## Docs
 

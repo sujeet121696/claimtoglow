@@ -39,7 +39,8 @@
         Codes are per registrant and non-transferable; each key analyses only its owner's trial.
         Team has 2 women, so it is eligible for the Women in Tech prize.
         Oct 7: both YouCam keys are in `.env` (`YOUCAM_API_SAHNI_KEY`, `YOUCAM_API_SUVAANI_KEY`) and
-        accepted by the API. Still to confirm: both joined the Devpost team
+        accepted by the API, and all three keys are different. Still to confirm: both joined the
+        Devpost team, and both redeemed their units (check each YouCam console)
 
 **Trial (before day 0)**
 4. [ ] Pick one product with a specific claim of **21 days or less**. Photograph the claim on the box
@@ -57,50 +58,81 @@
      (`npm run dev:phone`, https://<pc-ip>:5173 → Capture, phone on a stand, same spot).
      The phone day-00 and 5 webcam repeat shots (taken 1 s apart, not fresh) were moved to
      `photos/_retired/`; day-00 is retaken on Oct 7 in the lab (an earlier face-wash use that day is
-     noted in trial.json). **Sahni** also restarts on Oct 7 with the phone in the lab (old day-00 retired). Her lab
-     capture was then overwritten by a copied-in old file (fingerprint mismatch), so it was retired
-     too and she retakes day-00. Never copy files into trial folders by hand.
-     Suvaani: tonight. Rule: one camera per person for day 0, daily photos and repeat photos. Each person's details live in
+     noted in trial.json). **Sahni:** her webcam and copied-in day-00 shots were retired (one was
+     overwritten by an old file, fingerprint mismatch); day-00 retaken on Oct 7 at 19:00 IST with the
+     phone front camera in the lab, so her daily photo is around 19:00. Never copy files into trial
+     folders by hand. **Suvaani:** tonight (current day-00 is an old photo that fails the gate). Rule: one camera per person for day 0, daily photos and repeat photos. Each person's details live in
      `photos/trial-<person>/trial.json` (edit in the lab: Person → Edit)
    - Cost (Oct 6 console): an SD analysis with 10 concerns costs **14 units**; a split-face photo costs
      2 analyses. Same photo re-analysed gives identical scores, so all noise comes from capture
-   - Face wash trials track `radiance` and `texture` (all 3 faces already score 93–97 on `age_spot`)
+   - Face wash trials track `radiance`, `texture` and `moisture` (from the full product page, Oct 7; all 3 faces already score 93–97 on `age_spot`)
+   - **Budget per person (Oct 7):** noise set (day-00 + 5 repeats, split) 168 units + checkpoints
+     day 7/14/21 (3 photos each) 252 units = **~420 units**. Daily photos are kept but analysed only
+     if units are left at the end (+504). Each person's photos are billed to their own key
 4a. [x] Split-face: treated side is image left for everyone, fixed for the whole trial.
        Apply only to that half, stopping at the nose line. Nose centred in frame for every photo
-5. [ ] Fix the setup: same spot, same time of day, phone on a stand, rear camera, no filters or
-       beauty mode, face 60–80% of frame width, neutral face, mouth closed
-6. [ ] **Day-0 photo on Oct 7 (moved from Oct 3), before the first use**, then one photo every morning
+5. [x] Fix the setup: same spot, same time of day, phone on a stand, the phone's front camera in the
+       lab (one camera per person, checked by the gate), no filters or beauty mode, neutral face
+6. [ ] **Day-0 photo on Oct 7 (moved from Oct 3), before the first use**. Done: Sujeet (16:49 IST),
+       Sahni (19:00 IST). To do: Suvaani, then one photo every morning
        (before any product, sunscreen on the whole face after). One set per person: `trial-<person>`,
        e.g. `trial-sujeet`, named `day-00`, `day-01`, … automatically by the lab app
 
 **Noise test**
-7. [ ] In the same setup and sitting, take repeat photos into `noise-<person>` (10 for Sujeet, ≥5 for
-       the others). Step out of frame and back between shots ("Fresh shots" in the lab enforces it)
+7. [ ] In the same setup and sitting, take repeat photos into `noise-<person>` (≥5 each). Done:
+       Sujeet 5, Sahni 5 (all passed the gate). To do: Suvaani. Step out of frame and back between shots ("Fresh shots" in the lab enforces it)
 8. [x] API tested Oct 6 on 2 faces (`photos/api-test/`): works, raw scores 0–100, higher looks better, `ui_score` differs a lot from raw. Face <60% width is rejected. Units per analysis: _pending (balance was 1,026)_
-8a. [ ] `python scripts/noise_test.py photos/noise-sujeet --split --limit 2`: does YouCam accept the
+8a. [x] `python scripts/noise_test.py photos/noise-sujeet --split --limit 2`: does YouCam accept the
        mirrored half-faces? If yes, run the full `--split` set and record the `L-R` floor too
-9. [ ] Run the full noise test and record the noise floor per concern below
+9. [ ] Run the full noise test and record the noise floor per concern below. Done: Sujeet.
+       To do: Sahni (168 units on her key), Suvaani
 10. [ ] **Go/no-go:** go if the claimed concern's noise floor is small next to a realistic change
         (a few points). If it's huge, switch to the backup idea (Shaadi Look Planner)
 
 **Noise floor results**
 
-| Concern | n | SD | Floor (2√2 SD) |
-|---|---|---|---|
-| _pending_ | | | |
+Sujeet, Oct 7: phone front camera, split-face, 5 repeat photos in one sitting (12 analyses,
+~168 units). YouCam **accepts mirrored half-faces** (8a done). Series is treated − control (L−R).
+
+| Concern | n | SD (L−R) | Floor 1 photo vs 1 (2√2 SD) | Floor 3 vs 6 photos |
+|---|---|---|---|---|
+| radiance | 5 | 3.06 | 8.65 | 4.33 |
+| texture | 5 | 1.53 | 4.34 | 2.17 |
+| dark_circle_v2 | 5 | 2.75 | 7.76 | 3.88 |
+| age_spot | 5 | 0.89 | 2.53 | 1.26 |
+| pore | 5 | 6.46 | 18.26 | 9.13 |
+| redness | 5 | 7.41 | 20.96 | 10.48 |
+
+**Finding:** day-00 (11:19) sits 2–4 SD away from the repeat photos (12:11) on radiance, texture and
+pore, although nothing changed in between. Noise between sessions is bigger than within one sitting,
+most likely because window light shifted. **Decision (go, with changes):** fixed light at a fixed time
+every day; each checkpoint (day 7, 14, 21) is 3 fresh photos averaged; day 0 = the 5 repeat photos +
+day-00. Daily single photos are still taken and kept.
 
 ## Oct 6 – 18 · Daily photo + two weekends → M2
 11. [ ] Keep daily photos going
 12. [x] Choose backend and web stack, and record them in `ARCHITECTURE.md` (Oct 6: FastAPI + React/Vite, as Ringproof)
 13. [x] Analyzer module with local result cache (`app/analyzer.py`, shared with the noise script)
 14. [ ] Analyse trial photos so far; confirm which direction of `raw_score` is "better" per concern
-15. [ ] Verdict engine with the noise-floor rule (pure function, VISION D1)
+15. [x] Verdict engine with the noise-floor rule (pure function, VISION D1). Oct 7: `app/verdict.py`,
+        tests in `tests/`, verdict on each Today card, claimed concerns per trial (Person → Edit).
+        Baseline = day-00 + repeat photos; checkpoint = latest analysed day (one photo for now)
+15b. [ ] Checkpoint of 3 photos (day 7/14/21): the lab saves one photo per day, so extra checkpoint
+        photos need a naming rule before day 7 (Oct 14)
+15c. [ ] Confirm which direction is better per concern (task 14); the verdict assumes higher is better
 15a. [x] `trial.json` per trial: product, claim, treated side, start date (VISION D3). Lab is now organised by person: Today screen, person picker, day numbers from day 0, Retake
 16. [ ] Capture gate: brightness + face framing/pose (MediaPipe), day-0 ghost overlay
     - [x] Built in the lab app (`web/src/gate.ts`): Capture, Upload and Results screens. Checked on
           the 2 test photos via Upload; flags uneven light and off-centre nose correctly
-    - [ ] Test the live camera on the laptop and on the phone (`npm run dev:phone`)
+    - [x] Test the live camera on the laptop and on the phone (`npm run dev:phone`)
+    - [x] Oct 7 fixes: same-camera and light-direction checks vs day 0, phone full-screen capture,
+          day-0 camera picked automatically, Wi-Fi lock with QR unlock, fingerprint mismatch badge,
+          notes field separate from the claim, test sets billed to their owner
     - [ ] Tune thresholds from the day-0 session
+16a. [ ] Open the lab from anywhere (README "Open it from anywhere"). Code done Oct 7: FastAPI serves
+       the built app, tunnel traffic counts as remote and needs the lab token, no caching of photos,
+       "Open on phone" offers Anywhere / Same Wi-Fi with Copy link. To do: tunnel login, create and
+       DNS route, Access app with the 3 team emails, `PUBLIC_URL` in `.env`
 
 ## Oct 19 – 29 · Daily photo only → M3
 17. [ ] Keep daily photos going (trial ends by Oct 24)
@@ -108,10 +140,13 @@
 
 ## Oct 30 – Nov 1 · Full build → M4, M5
 19. [ ] Analyse the final trial photos
-20. [ ] Claim agent: claim text → `{ concerns[], direction, deadline_days }`
+20. [x] Claim agent: claim text → `{ concerns[], deadline_days }`. Oct 7: built (`app/llm.py`, `app/claim.py`,
+        "Suggest from claim" in Person → Edit). Tested live on Groq, Gemini and NVIDIA. Real claims:
+        face wash (full product page) → radiance, texture, moisture (all 3 models agree; set for Sujeet and
+        Sahni); Demelan+ → age_spot, radiance (Suvaani's trial stays on dark circles, off-label)
 21. [ ] Web app: claim, capture, timeline and verdict screens
 22. [ ] Receipt page with photo hashes, plus the badge snippet
-23. [ ] Deploy and get a public test link
+23. [ ] Public demo link for judges (a read-only demo, not the live lab with real faces)
 24. [ ] Demo video (1–3 min): claim on the box → split-face trial → verdict, uploaded to YouTube
 25. [ ] Devpost text: problem, differentiation, how YouCam is used, why `raw_score` + noise floor
 26. [ ] Make the repo public (or share it with contact_event@PerfectCorp.com)

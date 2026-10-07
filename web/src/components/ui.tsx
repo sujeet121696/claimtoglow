@@ -49,14 +49,17 @@ export function Segmented<T extends string>({ options, value, onChange }: {
   );
 }
 
-export function Field({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
-  return (
-    <label className="field">
+/** A labelled form control. `group` is for several controls (e.g. checkboxes): a <label> would
+ *  tick the first one whenever its text is clicked. */
+export function Field({ label, hint, group, children }: { label: string; hint?: ReactNode; group?: boolean; children: ReactNode }) {
+  const body = (
+    <>
       <span className="field-label">{label}</span>
       {children}
       {hint && <small className="muted">{hint}</small>}
-    </label>
+    </>
   );
+  return group ? <div className="field" role="group" aria-label={label}>{body}</div> : <label className="field">{body}</label>;
 }
 
 export function Badge({ tone, children }: { tone: "pass" | "fail" | "neutral"; children: ReactNode }) {

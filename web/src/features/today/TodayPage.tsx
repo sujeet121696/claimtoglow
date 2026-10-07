@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useStore } from "../../app/store";
 import { Empty, PageHeader } from "../../components/ui";
 import { checkUnchecked } from "../../lib/gateBackfill";
+import { PhoneLink } from "../people/PhoneLink";
 import { PersonCard } from "./PersonCard";
 import "./today.css";
 
@@ -28,7 +29,7 @@ export function TodayPage() {
       <PageHeader
         title="Today"
         description={`${date}. Each person needs today's photo; repeat photos are needed once.`}
-        actions={<button onClick={() => edit("new")}>＋ Add person</button>}
+        actions={<><PhoneLink /><button onClick={() => edit("new")}>＋ Add person</button></>}
       />
       {people.length ? (
         <div className="people-grid">{people.map((p) => <PersonCard key={p.person} person={p} />)}</div>

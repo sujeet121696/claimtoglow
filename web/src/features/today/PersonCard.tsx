@@ -15,6 +15,10 @@ export function PersonCard({ person: p }: { person: Person }) {
   const { selectPerson, edit } = useStore();
   const progress = p.day === null ? 0 : Math.min(1, Math.max(0, p.day / p.duration_days));
   const noiseDone = p.noise_count >= p.noise_target;
+  // Same time of day as day 0 means the same light.
+  const day0Time = p.day0?.saved_at
+    ? new Date(p.day0.saved_at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+    : null;
 
   const Actions = ({ kind }: { kind: Kind }) => (
     <span className="task-actions">
@@ -46,7 +50,10 @@ export function PersonCard({ person: p }: { person: Person }) {
       <ul className="tasks">
         <li>
           <span className={p.today_done ? "pass" : "todo"} aria-hidden>{p.today_done ? "✓" : "○"}</span>
-          <span>Today's photo{p.day !== null && p.day >= 0 ? ` · ${dayStem(p.day)}` : ""}</span>
+          <span>
+            Today's photo{p.day !== null && p.day >= 0 ? ` · ${dayStem(p.day)}` : ""}
+            {day0Time && !p.today_done && <span className="muted small"> · around {day0Time}</span>}
+          </span>
           {!p.today_done && <Actions kind="trial" />}
         </li>
         <li>
@@ -55,6 +62,12 @@ export function PersonCard({ person: p }: { person: Person }) {
           {!noiseDone && <Actions kind="noise" />}
         </li>
       </ul>
+
+      <div className="verdict small">
+        <b>Verdict</b>
+        <Badge tone={p.verdict.status === "met" ? "pass" : p.verdict.status === "not met" ? "fail" : "neutral"}>{p.verdict.status}</Badge>
+        <span className="muted">{p.verdict.reason}</span>
+      </div>
 
       {p.day0 ? (
         <div className="day0">
@@ -76,8 +89,6 @@ export function PersonCard({ person: p }: { person: Person }) {
       ) : (
         <p className="muted small">No day-0 photo yet. Take it before the first use.</p>
       )}
-
-      <p className="muted small mono key">{p.key_var}</p>
     </article>
   );
 }

@@ -17,7 +17,9 @@ export const LIMITS = {
   clipped: 0.03, // share of blown-out face pixels
   balance: 0.1, // |left − right| / mean brightness of the two face halves
   minShortSide: 480, // YouCam SD minimum
-  match: { faceWidth: 0.04, noseX: 0.03, pitch: 0.04, luma: 0.15 }, // vs day 0
+  // vs day 0. lightSide: which half is brighter, signed. On Oct 7 a 50-minute shift in window light
+  // moved treated − control scores by 2–4× the noise, so the light's direction must match too.
+  match: { faceWidth: 0.04, noseX: 0.03, pitch: 0.04, luma: 0.15, lightSide: 0.04 },
 };
 
 export type Crop = { x: number; y: number; w: number; h: number };
@@ -35,11 +37,16 @@ export type Metrics = {
   blink: number;
   luma: number;
   balance: number;
+  lightSide: number; // (left − right) / mean brightness of the face halves, in image space
   clipped: number;
   shortSide: number;
+  width: number; // saved image size: a different size means a different camera or mode
+  height: number;
 };
 
-export type Reference = Pick<Metrics, "faceWidth" | "noseX" | "pitch" | "luma">;
+/** What a new photo must match from day 0. Older day-0 records may lack the newer fields. */
+export type Reference = Pick<Metrics, "faceWidth" | "noseX" | "pitch" | "luma"> &
+  Partial<Pick<Metrics, "lightSide" | "width" | "height">>;
 
 export type Check = { id: string; label: string; pass: boolean; value: string; hint: string };
 
@@ -63,10 +70,11 @@ export function samplePixels(source: CanvasImageSource, crop: Crop, canvas: HTML
   return ctx.getImageData(0, 0, w, h);
 }
 
-export function emptyMetrics(shortSide: number): Metrics {
+export function emptyMetrics(crop: Crop): Metrics {
   return {
     faces: 0, faceWidth: 0, inBounds: false, noseX: 0, yaw: 0, roll: 0, pitch: 0,
-    jawOpen: 0, smile: 0, blink: 0, luma: 0, balance: 0, clipped: 0, shortSide,
+    jawOpen: 0, smile: 0, blink: 0, luma: 0, balance: 0, lightSide: 0, clipped: 0,
+    shortSide: Math.min(crop.w, crop.h), width: crop.w, height: crop.h,
   };
 }
 
@@ -79,7 +87,7 @@ export function computeMetrics(
 ): Metrics {
   const shortSide = Math.min(crop.w, crop.h);
   const lm = result.faceLandmarks[0];
-  if (!lm) return emptyMetrics(shortSide);
+  if (!lm) return emptyMetrics(crop);
 
   // Landmarks are normalised to the source frame; move them into crop space (0–1).
   const P = (i: number) => ({ x: (lm[i].x * sw - crop.x) / crop.w, y: (lm[i].y * sh - crop.y) / crop.h });
@@ -138,8 +146,11 @@ export function computeMetrics(
     blink: Math.max(b("eyeBlinkLeft"), b("eyeBlinkRight")),
     luma,
     balance: luma ? Math.abs(meanL - meanR) / ((meanL + meanR) / 2) : 0,
+    lightSide: luma ? (meanL - meanR) / ((meanL + meanR) / 2) : 0,
     clipped: nL + nR ? clipped / (nL + nR) : 0,
     shortSide,
+    width: crop.w,
+    height: crop.h,
   };
 }
 
@@ -200,18 +211,33 @@ export function evaluate(m: Metrics, ref?: Reference | null): Check[] {
       Math.abs(m.noseX - ref.noseX) > M.noseX && "nose position",
       Math.abs(m.pitch - ref.pitch) > M.pitch && "chin angle",
       Math.abs(m.luma - ref.luma) / ref.luma > M.luma && (m.luma < ref.luma ? "more light" : "less light"),
+      ref.lightSide !== undefined && Math.abs(m.lightSide - ref.lightSide) > M.lightSide && "light from another side",
     ].filter(Boolean);
+    if (ref.width && ref.height) {
+      const same = ref.width === m.width && ref.height === m.height;
+      checks.push({
+        id: "camera", label: "Same camera as day 0", value: `${m.width}×${m.height}${same ? "" : ` (day 0: ${ref.width}×${ref.height})`}`,
+        pass: same, hint: "Use the same camera, phone and mode as day 0",
+      });
+    }
     checks.push({
       id: "match", label: "Matches day 0", value: misses.length ? `off: ${misses.join(", ")}` : "yes",
-      pass: misses.length === 0, hint: "Match the day-0 ghost: same distance, position and light",
+      pass: misses.length === 0, hint: "Match day 0: same distance, position, time of day and light",
     });
   }
   return checks;
 }
 
 export function referenceFrom(meta: unknown): Reference | null {
-  const m = (meta as { gate?: { metrics?: Metrics } } | null)?.gate?.metrics;
-  return m ? { faceWidth: m.faceWidth, noseX: m.noseX, pitch: m.pitch, luma: m.luma } : null;
+  const record = meta as { gate?: { metrics?: Partial<Metrics> }; width?: number; height?: number } | null;
+  const m = record?.gate?.metrics;
+  if (!m || m.faceWidth === undefined) return null;
+  return {
+    faceWidth: m.faceWidth, noseX: m.noseX!, pitch: m.pitch!, luma: m.luma!,
+    lightSide: m.lightSide,
+    width: m.width ?? record?.width, // older camera records kept the size outside the gate
+    height: m.height ?? record?.height,
+  };
 }
 
 export type GateRecord = { passed: boolean; checks: Check[]; metrics: Metrics };

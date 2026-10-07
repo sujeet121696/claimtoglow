@@ -7,6 +7,7 @@ import { ResultsPage } from "../features/results/ResultsPage";
 import { TodayPage } from "../features/today/TodayPage";
 import { UploadPage } from "../features/upload/UploadPage";
 import { Empty } from "../components/ui";
+import { LockScreen } from "./LockScreen";
 import { href, PAGES, useRoute, type Page } from "./router";
 import { StoreProvider, useStore } from "./store";
 
@@ -19,7 +20,7 @@ const VIEWS: Record<Page, ComponentType> = {
 
 function Shell() {
   const [route] = useRoute();
-  const { people, editing } = useStore();
+  const { people, editing, locked } = useStore();
   const View = VIEWS[route.page];
   const needsPerson = route.page !== "today" && !people.length;
 
@@ -36,7 +37,9 @@ function Shell() {
       </header>
 
       <main className="page">
-        {needsPerson ? <Empty>Add a person on the Today page first.</Empty> : <View />}
+        {locked ? (
+          <LockScreen reason={locked} />
+        ) : needsPerson ? <Empty>Add a person on the Today page first.</Empty> : <View />}
       </main>
 
       <footer className="footer muted small">Cosmetic skin metrics only, not a diagnosis. Photos stay on this machine.</footer>
