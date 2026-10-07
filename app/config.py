@@ -23,13 +23,13 @@ def person_of(set_name: str):
 
 
 def key_var_for(set_name: str) -> str:
-    """Which env var pays for a set: a teammate's own key (YOUCAM_API_KEY_SAHNI for trial-sahni /
+    """Which env var pays for a set: a teammate's own key (YOUCAM_API_SAHNI_KEY for trial-sahni /
     noise-sahni) when it is set, otherwise the main key. Redeem codes are per registrant, so each
     teammate's units are spent only on their own trial."""
     load_env()
     person = person_of(set_name)
     if person:
-        var = f"{DEFAULT_KEY_VAR}_{re.sub(r'[^A-Z0-9]', '_', person.upper())}"
+        var = f"YOUCAM_API_{re.sub(r'[^A-Z0-9]', '_', person.upper())}_KEY"
         if os.environ.get(var):
             return var
     return DEFAULT_KEY_VAR

@@ -207,6 +207,9 @@ export function Camera({ setName, side, onSaved }: Props) {
     const o = opts.current;
     const v = videoRef.current;
     if (!v || !L.crop || !L.metrics || L.capturing) return;
+    // "Capture anyway" may skip failed checks, but never the fresh-shot rule: near-identical
+    // frames would make the noise floor look smaller than it is.
+    if (L.awaitingLeave) return setStatus("Step out of frame and come back before the next shot.");
     L.capturing = true;
     try {
       const { crop } = L;

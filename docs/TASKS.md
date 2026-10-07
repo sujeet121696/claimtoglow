@@ -37,7 +37,9 @@
 3a. [ ] Ask the organisers for extra test units (Devpost discussion or contact_event@PerfectCorp.com)
 3b. [ ] Teammates (Sahni, Suvaani) register on Devpost, join the team, and redeem their own YouCam codes.
         Codes are per registrant and non-transferable; each key analyses only its owner's trial.
-        Team has 2 women, so it is eligible for the Women in Tech prize
+        Team has 2 women, so it is eligible for the Women in Tech prize.
+        Oct 7: both YouCam keys are in `.env` (`YOUCAM_API_SAHNI_KEY`, `YOUCAM_API_SUVAANI_KEY`) and
+        accepted by the API. Still to confirm: both joined the Devpost team
 
 **Trial (before day 0)**
 4. [ ] Pick one product with a specific claim of **21 days or less**. Photograph the claim on the box
@@ -49,7 +51,16 @@
      circles; tracked concern `dark_circle_v2` (Suvaani scored 61.0 on Oct 6). The brand claims even tone
      and brightening, not dark circles, so the verdict must say it was tested off-label. Glycolic acid
      near the eyes: patch test, thin layer on the under-eye bone only, night only, stop on irritation. Treated side for everyone: **image left** (the person's right side).
-     Everyone consents to YouCam processing. Day 0 was Oct 7. Each person's details live in
+     Everyone consents to YouCam processing. Day 0 was Oct 7.
+   - **Oct 7, Sujeet:** camera for the whole trial is the **phone's front camera in the lab** (day-00 was
+     taken with it, so it stays front)
+     (`npm run dev:phone`, https://<pc-ip>:5173 → Capture, phone on a stand, same spot).
+     The phone day-00 and 5 webcam repeat shots (taken 1 s apart, not fresh) were moved to
+     `photos/_retired/`; day-00 is retaken on Oct 7 in the lab (an earlier face-wash use that day is
+     noted in trial.json). **Sahni** also restarts on Oct 7 with the phone in the lab (old day-00 retired). Her lab
+     capture was then overwritten by a copied-in old file (fingerprint mismatch), so it was retired
+     too and she retakes day-00. Never copy files into trial folders by hand.
+     Suvaani: tonight. Rule: one camera per person for day 0, daily photos and repeat photos. Each person's details live in
      `photos/trial-<person>/trial.json` (edit in the lab: Person → Edit)
    - Cost (Oct 6 console): an SD analysis with 10 concerns costs **14 units**; a split-face photo costs
      2 analyses. Same photo re-analysed gives identical scores, so all noise comes from capture

@@ -19,6 +19,7 @@ export type Photo = {
   file: string;
   url: string;
   sha256: string;
+  tampered: boolean;
   meta: PhotoMeta;
   scores: Scores | null;
   split: { L: Scores; R: Scores } | null;

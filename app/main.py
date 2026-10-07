@@ -62,11 +62,14 @@ def read_meta(photo: Path):
 
 def photo_info(name: str, photo: Path, whole: dict, halves: dict) -> dict:
     meta = read_meta(photo) or {}
+    actual = sha256(photo)
     return {
         "stem": photo.stem,
         "file": photo.name,
         "url": f"/files/photos/{name}/{photo.name}",
-        "sha256": meta.get("sha256") or sha256(photo),
+        "sha256": actual,
+        # The fingerprint saved at capture no longer matches the file: it was replaced or edited.
+        "tampered": bool(meta.get("sha256")) and meta["sha256"] != actual,
         "meta": meta,
         "scores": whole.get(photo.stem),
         "split": {"L": halves[photo.stem][0], "R": halves[photo.stem][1]} if photo.stem in halves else None,

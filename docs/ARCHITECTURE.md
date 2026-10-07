@@ -23,7 +23,7 @@ Source: https://docs.makeupar.com/reference/ai_skin_analysis (checked Sep 27, 20
 | Item | Value |
 |---|---|
 | Base URL | `https://yce-api-01.makeupar.com/s2s/v2.0` (India region) |
-| Auth | `Authorization: Bearer <API key>`. One key per teammate: sets `trial-<person>` / `noise-<person>` use `YOUCAM_API_KEY_<PERSON>` when set, else `YOUCAM_API_KEY` (`app/config.py`) |
+| Auth | `Authorization: Bearer <API key>`. One key per teammate: sets `trial-<person>` / `noise-<person>` use `YOUCAM_API_<PERSON>_KEY` when set, else `YOUCAM_API_KEY` (`app/config.py`) |
 | Upload | `POST /file` → `file_id` + pre-signed `PUT` URL, then upload the bytes |
 | Create task | `POST /task/skin-analysis` with `src_file_id`, `dst_actions[]`, `format: "json"` |
 | Poll | `GET /task/skin-analysis/{task_id}` → `task_status`: `running` / `success` / `error` |

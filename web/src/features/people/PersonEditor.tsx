@@ -39,7 +39,7 @@ export function PersonEditor() {
       <div className="dialog card" role="dialog" aria-modal="true" aria-labelledby="editor-title" onClick={(e) => e.stopPropagation()}>
         <h2 id="editor-title">{person ? `Edit ${personLabel(person.person)}` : "Add a person"}</h2>
         <div className="form-grid">
-          <Field label="Name" hint={!person && `Lowercase. Their own API key goes in .env as YOUCAM_API_KEY_${(id || "NAME").toUpperCase()}`}>
+          <Field label="Name" hint={!person && `Lowercase. Their own API key goes in .env as YOUCAM_API_${(id || "NAME").toUpperCase()}_KEY`}>
             <input value={id} onChange={(e) => setId(e.target.value)} disabled={!!person} placeholder="e.g. sahni" autoFocus={!person} />
           </Field>
           <Field label="Product">
