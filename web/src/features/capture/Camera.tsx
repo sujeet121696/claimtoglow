@@ -11,11 +11,15 @@ import { Card } from "../../components/ui";
 import { useReference } from "../../hooks/useReference";
 import { beep } from "../../lib/beep";
 import { loadPref, savePref } from "../../lib/storage";
-import { computeMetrics, evaluate, gateRecord, LIMITS, portraitCrop, samplePixels, type Check, type Crop, type Metrics } from "../../lib/gate";
+import { computeMetrics, evaluate, gateRecord, LIMITS, portraitCrop, requiredPass, samplePixels, type Check, type Crop, type Metrics } from "../../lib/gate";
 import { getLandmarker } from "../../lib/landmarker";
+import { saveMaskFor } from "../../lib/maskBackfill";
 
 const HOLD_MS = 2000;
 const DETECT_EVERY_MS = 100;
+// Landmarks jitter: a check must fail this long before the countdown restarts. The photo is still
+// taken only on a frame where every check passes.
+const GRACE_MS = 400;
 
 // Short names for the check chips on the video.
 const CHIP: Record<string, string> = {
@@ -47,7 +51,7 @@ export function Camera({ setName, side, title, onSaved }: Props) {
   // Mutable state read by the animation loop.
   const live = useRef({
     metrics: null as Metrics | null, checks: [] as Check[], crop: null as Crop | null,
-    lastDetect: 0, passSince: 0, noFaceSince: 0, awaitingLeave: false, capturing: false,
+    lastDetect: 0, passSince: 0, failSince: 0, noFaceSince: 0, awaitingLeave: false, capturing: false,
     lastBeep: -1, mirror: true, deviceLabel: "",
   });
   const opts = useRef({ auto, fresh, ghost, reference, side, setName, onSaved });
@@ -162,6 +166,7 @@ export function Camera({ setName, side, title, onSaved }: Props) {
     const L = live.current;
     const reset = () => {
       L.passSince = 0;
+      L.failSince = 0;
       L.lastBeep = -1;
       setSteady(false);
     };
@@ -178,8 +183,15 @@ export function Camera({ setName, side, title, onSaved }: Props) {
       }
       return reset();
     }
-    const pass = L.checks.length > 0 && L.checks.every((c) => c.pass);
-    if (!pass || L.capturing) return reset();
+    const pass = requiredPass(L.checks);
+    if (L.capturing) return reset();
+    if (!pass) {
+      if (!L.passSince) return;
+      L.failSince ||= now;
+      if (now - L.failSince > GRACE_MS) reset();
+      return; // never shoot on a failing frame
+    }
+    L.failSince = 0;
     L.passSince ||= now;
     const held = now - L.passSince;
     setSteady(held >= 500);
@@ -217,7 +229,7 @@ export function Camera({ setName, side, title, onSaved }: Props) {
     ctx.restore();
 
     // Guides are symmetric, so mirroring doesn't move them.
-    const ok = L.checks.length > 0 && L.checks.every((c) => c.pass);
+    const ok = requiredPass(L.checks);
     ctx.lineWidth = 2;
     ctx.strokeStyle = ok ? "#00c853" : "#ffb020"; // brand green when every check passes
     line(ctx, dw / 2, 0, dw / 2, dh);
@@ -274,6 +286,7 @@ export function Camera({ setName, side, title, onSaved }: Props) {
         source: "camera", treated_side: o.side, gate, device: L.deviceLabel, width: crop.w, height: crop.h,
       });
       beep(880, 0.3);
+      saveMaskFor(o.setName, photo.stem, canvas).catch(() => undefined); // the lab PC fills any gap later
       let msg = `Saved ${o.setName}/${photo.stem}${gate.passed ? "" : " (gate failed, marked)"}`;
       if (o.fresh) {
         L.awaitingLeave = true;
@@ -295,7 +308,7 @@ export function Camera({ setName, side, title, onSaved }: Props) {
   }
 
   // The one thing to do next, shown large on the video.
-  const failing = checks.find((c) => !c.pass);
+  const failing = checks.find((c) => !c.pass && !c.optional);
   const hint = justSaved
     ? { text: justSaved, tone: "good" }
     : leaving
@@ -329,7 +342,7 @@ export function Camera({ setName, side, title, onSaved }: Props) {
             <div className="ov-bottom">
               <div className="chips">
                 {checks.map((c) => (
-                  <span key={c.id} className={`chip ${c.pass ? "pass" : "fail"}`}>{c.pass ? "✓" : "✗"} {CHIP[c.id] ?? c.label}</span>
+                  <span key={c.id} className={`chip ${c.pass ? "pass" : c.optional ? "warn" : "fail"}`}>{c.pass ? "✓" : c.optional ? "!" : "✗"} {CHIP[c.id] ?? c.label}</span>
                 ))}
               </div>
               <div className="ov-controls">

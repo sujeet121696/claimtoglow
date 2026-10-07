@@ -2,7 +2,7 @@ import { href } from "../../app/router";
 import { useStore } from "../../app/store";
 import type { Person } from "../../api/types";
 import { Badge } from "../../components/ui";
-import { dayStem, personLabel, sideShort, type Kind } from "../../domain/trial";
+import { CHANGE, concernLabel, dayStem, personLabel, sideShort, type Kind } from "../../domain/trial";
 
 function dayText(p: Person) {
   if (p.day === null) return "No day 0 set";
@@ -68,10 +68,26 @@ export function PersonCard({ person: p }: { person: Person }) {
         <Badge tone={p.verdict.status === "met" ? "pass" : p.verdict.status === "not met" ? "fail" : "neutral"}>{p.verdict.status}</Badge>
         <span className="muted">{p.verdict.reason}</span>
       </div>
+      {p.verdict.concerns.length > 0 && (
+        <ul className="concern-changes small">
+          {p.verdict.concerns.map((c) => {
+            const change = CHANGE[c.result];
+            return (
+              <li key={c.concern}>
+                <span>{concernLabel(c.concern)}</span>
+                <span className={`change ${change.tone}`}>
+                  {change.icon} {change.label}
+                  {c.effect !== undefined && ` · ${c.effect > 0 ? "+" : ""}${c.effect.toFixed(1)} (noise ±${c.floor?.toFixed(1)})`}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       {p.day0 ? (
         <div className="day0">
-          <img src={p.day0.url} alt={`${personLabel(p.person)}, day 0`} />
+          <img src={p.day0.masked_url ?? p.day0.url} alt={`${personLabel(p.person)}, day 0`} />
           <div className="small">
             <div className="day0-title">
               <b>Day 0</b>

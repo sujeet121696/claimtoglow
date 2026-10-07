@@ -5,7 +5,7 @@
 ## 1. Pipeline
 
 ```
-Claim text ──▶ [1] Claim agent (LLM) ──▶ { concerns[], direction, deadline_days }
+Claim text ──▶ [1] Claim agent (LLM) ──▶ { concerns[], deadline_days }
                                                   │
 Photo ──▶ [2] Capture gate ──(pass)──▶ [3] YouCam Skin Analysis ──▶ raw scores
             │ (fail: retake)                                           │
@@ -23,7 +23,7 @@ Source: https://docs.makeupar.com/reference/ai_skin_analysis (checked Sep 27, 20
 | Item | Value |
 |---|---|
 | Base URL | `https://yce-api-01.makeupar.com/s2s/v2.0` (India region) |
-| Auth | `Authorization: Bearer <API key>`. One key per teammate: sets `trial-<person>` / `noise-<person>` / `test-<person>` use `YOUCAM_API_<PERSON>_KEY` when set, else `YOUCAM_API_KEY` (`app/config.py`) |
+| Auth | `Authorization: Bearer <API key>`. One key per teammate: sets `trial-<person>` / `noise-<person>` use `YOUCAM_API_<PERSON>_KEY` when set, else `YOUCAM_API_KEY` (`app/config.py`) |
 | Upload | `POST /file` → `file_id` + pre-signed `PUT` URL, then upload the bytes |
 | Create task | `POST /task/skin-analysis` with `src_file_id`, `dst_actions[]`, `format: "json"` |
 | Poll | `GET /task/skin-analysis/{task_id}` → `task_status`: `running` / `success` / `error` |
@@ -31,7 +31,9 @@ Source: https://docs.makeupar.com/reference/ai_skin_analysis (checked Sep 27, 20
 | Billing | 14 units per SD analysis with 10 concerns (Oct 6 console); only on `success`. Same photo re-analysed gives identical scores |
 | Retention | Results kept 24 hours, so store them locally |
 
-**Observed Oct 6 (2 faces):** `raw_score` is 0–100 and higher looks better (to confirm). It
+**Observed Oct 6 (2 faces):** `raw_score` is 1–100 and higher is better for every concern (YouCam
+docs, checked Oct 7: "A higher score indicates healthier and more aesthetically pleasing skin
+condition"). It
 differs a lot from `ui_score` (moisture 48 raw vs 69 ui). A face that measured 55% wide by
 MediaPipe landmarks was accepted, so YouCam's "60%" uses a wider face box. Rejected tasks cost
 no units.
@@ -69,12 +71,14 @@ expression, mouth closed, eyes open. Errors to handle: `error_src_face_too_small
 
 ```
 app/       FastAPI: youcam.py (client), analyzer.py (cache, split halves), noise.py,
-           verdict.py (pure verdict rule), llm.py (providers), claim.py (claim agent), trials.py (people, trial.json, day numbering,
+           verdict.py (pure verdict rule), llm.py (providers), claim.py (claim agent),
+           masking.py (background-free copies), trials.py (people, trial.json, day numbering,
            retake, data for the verdict), main.py (API)
 web/src/   app/        shell, hash router (#/page?key=value), store (people, selected person)
            api/        typed client, one function per endpoint (future agent tools, VISION D1)
            domain/     trial rules: kinds, set names, labels, concerns (mirrors app/trials.py)
-           lib/        gate.ts (capture checks), landmarker, gate backfill, storage, beep
+           lib/        gate.ts (capture checks), landmarker, segmenter (person mask),
+                       gate and mask backfill, lab token, storage, beep
            components/ PageHeader, Card, Segmented, Field, Badge, ChecksList
            features/   today, people, capture (Camera), upload (Uploader), results
            styles/     tokens.css (colours, spacing), base.css, components.css
@@ -82,6 +86,7 @@ web/dist/  built app (npm run build), served by FastAPI at /. Git-ignored
 scripts/   noise_test.py (CLI)
 tests/     unittest: verdict rule, claim agent and provider fallback (no network)
 photos/    <set>/<stem>.jpg + <stem>.meta.json (gate result, SHA-256). Git-ignored
+           <set>/_mask/<stem>.png (person mask) + <stem>.jpg (room replaced by flat grey)
            trial-<person>/trial.json: product, claim, claimed concerns, treated side, day 0, length.
            trial-<person>: daily photos day-NN, NN = days since day 0 (gaps stay gaps);
            noise-<person>: repeat photos shot-NN. Both matched against trial-<person>/day-00.
@@ -113,13 +118,20 @@ comes from `LAB_TOKEN` in `.env`, else is generated once into `.lab_token` (git-
   says why (no token vs wrong token) and accepts a pasted lab link.
 - `/api` and `/files` responses carry `Cache-Control: private, no-store`, so Cloudflare never
   caches faces or scores.
+- Other devices only get background-free copies (`_mask/`); originals answer 403 off the PC.
+  Masks are made in the browser (MediaPipe selfie segmenter, CPU) right after each capture or
+  upload, and by the lab PC for any photo still without one. The API refuses an empty mask (<5% person). YouCam still analyses the originals: on Oct 7, blanked
+  copies shifted radiance by +1.9 and +3.7 (0.6–1.2 noise SD, same direction), so mixing the two
+  would fake a change.
 
 **Capture gate checks:** one face; face width 55–78% of the image; whole face in frame; nose on
 the centre line (±3%, needed for the split); yaw/roll; chin level; neutral face (blendshapes);
 brightness and glare; even light on both halves (≤10%); short side ≥ 480 px; and, once day 0
-exists, a match to day 0 (distance, position, chin, brightness, which side the light comes from) and
-the same camera (image size). The camera page picks day 0's camera automatically, starts by itself
-once permitted, keeps the screen awake, and auto-captures by default on phones. Landscape cameras are cropped to 3:4.
+exists, the same camera (image size) and an optional match to day 0 (distance, position, chin,
+brightness, light side): shown and recorded, but it doesn't block the photo (Oct 7: matched repeat
+photos still differed from day 0, so checkpoints average 3 photos instead). The camera page picks day 0's camera automatically, starts by itself
+once permitted, keeps the screen awake, and auto-captures by default on phones. A check must fail
+for 0.4 s before the countdown restarts (landmark jitter), and a photo is only taken on a passing frame. Landscape cameras are cropped to 3:4.
 
 ## 5. Verdict rule (draft)
 
@@ -141,5 +153,6 @@ Comparing a mean of k photos with a mean of k0 baseline photos, the floor become
 2 × SD × √(1/k + 1/k0); with k = 3 and k0 = 6 that is 1.41 × SD instead of 2.83 × SD. Within-sitting
 SD understates day-to-day noise, so light and time of day must be fixed (see TASKS.md noise results).
 
-Which direction is "better" for each concern's `raw_score` must be confirmed from real data
-(e.g. does a higher `age_spot` score mean fewer spots?).
+**Direction (confirmed Oct 7, YouCam docs):** a higher `raw_score` is better for every concern, so
+"moved the claimed way" means up. The UI marks every score column ↑ and colours a change ▲ better /
+▼ worse only beyond the floor; inside it reads "no clear change".

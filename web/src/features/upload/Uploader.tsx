@@ -8,6 +8,7 @@ import { Badge, Card } from "../../components/ui";
 import { useReference } from "../../hooks/useReference";
 import { gateImage, referenceFrom, type GateRecord } from "../../lib/gate";
 import { getLandmarker } from "../../lib/landmarker";
+import { saveMaskFor } from "../../lib/maskBackfill";
 
 type Item = { id: number; file: File; url: string; stem: string; gate?: GateRecord; error?: string; saved?: string };
 
@@ -53,6 +54,7 @@ export function Uploader({ setName, side, onSaved }: Props) {
         source: "upload", treated_side: side, gate: item.gate, original_modified: new Date(item.file.lastModified).toISOString(),
       }, item.stem.trim());
       patch(item.id, { saved: photo.stem, error: undefined });
+      saveMaskFor(setName, photo.stem, item.file).catch(() => undefined); // the lab PC fills any gap later
       if (photo.stem === "day-00") reloadReference();
       onSaved();
     } catch (e) {

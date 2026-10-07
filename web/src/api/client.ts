@@ -30,7 +30,7 @@ export const api = {
   sets: () => call<{ sets: SetSummary[] }>("/api/sets").then((r) => r.sets),
   set: (name: string) => call<PhotoSet>(`/api/sets/${name}`),
   reference: (name: string) =>
-    call<{ set: string; url: string; meta: PhotoMeta | null } | null>(`/api/sets/${name}/reference`),
+    call<{ set: string; url: string; masked_url: string | null; meta: PhotoMeta | null } | null>(`/api/sets/${name}/reference`),
   noise: (name: string, split: boolean) =>
     call<{ rows: NoiseRow[] }>(`/api/sets/${name}/noise?split=${split}`).then((r) => r.rows),
 
@@ -40,6 +40,11 @@ export const api = {
     form.append("meta", JSON.stringify(meta));
     form.append("stem", stem);
     return call<Photo>(`/api/sets/${name}/photos`, { method: "POST", body: form });
+  },
+  saveMask: (name: string, stem: string, png: Blob) => {
+    const form = new FormData();
+    form.append("file", png, `${stem}.png`);
+    return call<Photo>(`/api/sets/${name}/photos/${stem}/mask`, { method: "POST", body: form });
   },
   saveGate: (name: string, stem: string, gate: GateRecord) =>
     call<Photo>(`/api/sets/${name}/photos/${stem}/gate`, json("POST", { gate })),

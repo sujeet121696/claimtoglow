@@ -24,7 +24,7 @@ export function useReference(setName: string): [RefState, () => void] {
       const device = typeof r.meta?.device === "string" ? r.meta.device : null;
       img.onload = () => setState({ ref: referenceFrom(r.meta), img, url: r.url, device, loaded: true });
       img.onerror = () => setState({ ref: referenceFrom(r.meta), img: null, url: r.url, device, loaded: true });
-      img.src = r.url;
+      img.src = r.masked_url ?? r.url; // ghost overlay: the person only, not the room
     }).catch(() => setState(EMPTY));
   }, [setName]);
   useEffect(load, [load]);

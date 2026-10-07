@@ -18,3 +18,8 @@
 .day0-title { display: flex; align-items: center; gap: var(--space-2); }
 .day0 p { margin: 4px 0 0; }
 .verdict { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.concern-changes { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.concern-changes li { display: flex; justify-content: space-between; gap: var(--space-2); }
+.concern-changes .change.better { color: var(--pass); font-weight: 700; }
+.concern-changes .change.worse { color: var(--fail); font-weight: 700; }
+.concern-changes .change.steady, .concern-changes .change.unknown { color: var(--muted); }

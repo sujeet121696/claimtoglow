@@ -12,6 +12,7 @@ from datetime import date, datetime
 
 from .analyzer import cached_scores, photo_files, result_dir
 from .config import PHOTOS, RESULTS, key_var_for
+from .masking import MASK_DIR, mask_files
 from .noise import split_pairs
 from .verdict import verdict
 
@@ -66,12 +67,13 @@ def summary(person: str, read_meta) -> dict:
         "today_done": day is not None and f"day-{day:02d}" in {p.stem for p in daily},
         "noise_count": len(photo_files(PHOTOS / f"noise-{person}")),
         "noise_target": NOISE_TARGET,
-        "verdict": {k: v for k, v in trial_verdict(person).items() if k in ("status", "reason")},
+        "verdict": {k: v for k, v in trial_verdict(person).items() if k in ("status", "reason", "concerns")},
         "day0": {
             "url": f"/files/photos/trial-{person}/{day0.name}",
+            "masked_url": f"/files/photos/trial-{person}/{MASK_DIR}/day-00.jpg" if mask_files(f"trial-{person}", "day-00")[1].exists() else None,
             "saved_at": day0_meta.get("saved_at"),  # same time of day = same light
             "gate_passed": gate.get("passed") if gate else None,
-            "failed": [c["label"] for c in gate.get("checks", []) if not c["pass"]] if gate else [],
+            "failed": [c["label"] for c in gate.get("checks", []) if not c["pass"] and not c.get("optional")] if gate else [],
         } if day0 else None,
     }
 
@@ -101,13 +103,14 @@ def _move_aside(set_name: str, files: list):
 def retire(set_name: str, photo) -> str:
     """Move a photo, its metadata and its cached analyses to _retired/. A retake under the same
     name never inherits the old photo's scores."""
-    return _move_aside(set_name, [photo, photo.with_suffix(".meta.json"), *_results_of(set_name, photo.stem)])
+    return _move_aside(set_name, [photo, photo.with_suffix(".meta.json"), *mask_files(set_name, photo.stem),
+                                  *_results_of(set_name, photo.stem)])
 
 
 def retire_stale_results(set_name: str, stem: str):
-    """Before a new photo is saved as <stem>: any scores cached under that name belong to an older
+    """Before a new photo is saved as <stem>: any scores or masks under that name belong to an older
     photo (one removed outside the lab), so move them aside instead of letting the new one inherit them."""
-    return _move_aside(set_name, _results_of(set_name, stem))
+    return _move_aside(set_name, [*mask_files(set_name, stem), *_results_of(set_name, stem)])
 
 
 def treated_minus_control(set_name: str, treated_side: str) -> dict:

@@ -24,6 +24,7 @@ from .analyzer import DEFAULT_ACTIONS, analyze_cached, cached_scores, mirror_hal
 from .claim import parse_claim
 from .config import NAME_RE, PHOTOS, WEB_DIST, key_var_for, lab_token, person_of, public_url
 from .llm import LLMError
+from .masking import MASK_DIR, blanked_path, save_mask
 from .noise import noise_rows, split_pairs
 from .trials import PERSON_RE, day_of, people, read_trial, retire, retire_stale_results, summary, trial_verdict, write_trial
 from .youcam import YouCam, YouCamError
@@ -67,6 +68,9 @@ async def lock_remote_devices(request: Request, call_next):
     or a teammate through the tunnel) needs the lab token, which it gets once from the lab link."""
     private = request.url.path.startswith(PRIVATE_PATHS)
     if private and request.url.path not in OPEN_PATHS and not is_local(request):
+        if request.url.path.startswith("/files/photos/") and f"/{MASK_DIR}/" not in request.url.path:
+            return JSONResponse({"detail": "Other devices only get photos with the background removed."},
+                                status_code=403, headers={"Cache-Control": "private, no-store"})
         token = request.cookies.get(TOKEN_COOKIE, "")
         if not token_ok(token):
             reason = "has an old or wrong lab link" if token else "hasn't opened the lab link yet"
@@ -122,6 +126,7 @@ def photo_info(name: str, photo: Path, whole: dict, halves: dict) -> dict:
         "stem": photo.stem,
         "file": photo.name,
         "url": f"/files/photos/{name}/{photo.name}",
+        "masked_url": masked_url(name, photo.stem),
         "sha256": actual,
         # The fingerprint saved at capture no longer matches the file: it was replaced or edited.
         "tampered": bool(meta.get("sha256")) and meta["sha256"] != actual,
@@ -129,6 +134,12 @@ def photo_info(name: str, photo: Path, whole: dict, halves: dict) -> dict:
         "scores": whole.get(photo.stem),
         "split": {"L": halves[photo.stem][0], "R": halves[photo.stem][1]} if photo.stem in halves else None,
     }
+
+
+def masked_url(name: str, stem: str):
+    """The copy with the background removed: the only version other devices may load."""
+    path = blanked_path(name, stem)
+    return f"/files/photos/{name}/{MASK_DIR}/{path.name}" if path else None
 
 
 def next_stem(name: str) -> str:
@@ -216,6 +227,22 @@ def analyze_photo(name: str, stem: str, split: bool = False):
     except RuntimeError as e:
         raise HTTPException(502, str(e))
     return get_set(name)
+
+
+@app.post("/api/sets/{name}/photos/{stem}/mask")
+async def upload_mask(name: str, stem: str, file: UploadFile = File(...)):
+    """Person mask from the browser (white = person); stores it and the background-free copy."""
+    photo = find_photo(name, stem)
+    data = await file.read()
+    if not data or len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(400, "Empty or too large mask")
+    try:
+        save_mask(photo, name, data)
+    except OSError as e:
+        raise HTTPException(422, f"Could not read the mask: {e}")
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    return photo_info(name, photo, {}, {})
 
 
 @app.post("/api/sets/{name}/photos/{stem}/gate")
@@ -330,7 +357,8 @@ def reference(name: str):
     ref_set = f"trial-{person}"
     for p in photo_files(PHOTOS / ref_set):
         if p.stem == "day-00":
-            return {"set": ref_set, "url": f"/files/photos/{ref_set}/{p.name}", "meta": read_meta(p)}
+            return {"set": ref_set, "url": f"/files/photos/{ref_set}/{p.name}",
+                    "masked_url": masked_url(ref_set, p.stem), "meta": read_meta(p)}
     return None
 
 

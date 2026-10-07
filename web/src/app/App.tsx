@@ -27,7 +27,10 @@ function Shell() {
   return (
     <div className="app">
       <header className="topbar">
-        <a className="brand" href={href("today")}>Claim to Glow</a>
+        <a className="brand" href={href("today")} aria-label="Claim to Glow home">
+          <img className="logo" src="/favicon.svg" alt="" width={34} height={34} />
+          <span>Claim to <b>Glow</b></span>
+        </a>
         <nav aria-label="Main">
           {(Object.keys(PAGES) as Page[]).map((p) => (
             <a key={p} href={href(p)} aria-current={route.page === p ? "page" : undefined}>{PAGES[p]}</a>

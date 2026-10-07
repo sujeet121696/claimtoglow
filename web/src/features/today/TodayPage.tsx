@@ -1,8 +1,10 @@
-// Home: one card per person with today's to-dos. Also checks photos copied in by hand.
+// Home: one card per person with today's to-dos. Also checks and removes the background of photos
+// that don't have it done yet (needs the originals, so in practice on the lab PC).
 import { useEffect } from "react";
 import { useStore } from "../../app/store";
 import { Empty, PageHeader } from "../../components/ui";
 import { checkUnchecked } from "../../lib/gateBackfill";
+import { maskMissing } from "../../lib/maskBackfill";
 import { PhoneLink } from "../people/PhoneLink";
 import { PersonCard } from "./PersonCard";
 import "./today.css";
@@ -16,7 +18,10 @@ export function TodayPage() {
     (async () => {
       let checked = 0;
       for (const id of ids.split(",")) {
-        for (const kind of ["trial", "noise"]) checked += await checkUnchecked(`${kind}-${id}`).catch(() => 0);
+        for (const kind of ["trial", "noise"]) {
+          checked += await checkUnchecked(`${kind}-${id}`).catch(() => 0);
+          checked += await maskMissing(`${kind}-${id}`).catch(() => 0);
+        }
       }
       if (checked) refresh();
     })();

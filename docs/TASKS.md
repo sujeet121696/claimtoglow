@@ -35,12 +35,12 @@
 2. [x] Create a YouCam API account via the India link: https://yce.makeupar.com/ai-api. 1,000 free units redeemed Oct 6, valid until Jan 4, 2027
 3. [ ] Share the hackathon on social media for bonus units (500 per platform, up to +1,000)
 3a. [ ] Ask the organisers for extra test units (Devpost discussion or contact_event@PerfectCorp.com)
-3b. [ ] Teammates (Sahni, Suvaani) register on Devpost, join the team, and redeem their own YouCam codes.
+3b. [x] Teammates (Sahni, Suvaani) register on Devpost, join the team, and redeem their own YouCam codes.
         Codes are per registrant and non-transferable; each key analyses only its owner's trial.
         Team has 2 women, so it is eligible for the Women in Tech prize.
         Oct 7: both YouCam keys are in `.env` (`YOUCAM_API_SAHNI_KEY`, `YOUCAM_API_SUVAANI_KEY`) and
-        accepted by the API, and all three keys are different. Still to confirm: both joined the
-        Devpost team, and both redeemed their units (check each YouCam console)
+        accepted by the API, and all three keys are different. Oct 7: both joined the Devpost team.
+        Still to confirm: both redeemed their units (check each YouCam console)
 
 **Trial (before day 0)**
 4. [ ] Pick one product with a specific claim of **21 days or less**. Photograph the claim on the box
@@ -81,7 +81,7 @@
 **Noise test**
 7. [ ] In the same setup and sitting, take repeat photos into `noise-<person>` (≥5 each). Done:
        Sujeet 5, Sahni 5 (all passed the gate). To do: Suvaani. Step out of frame and back between shots ("Fresh shots" in the lab enforces it)
-8. [x] API tested Oct 6 on 2 faces (`photos/api-test/`): works, raw scores 0–100, higher looks better, `ui_score` differs a lot from raw. Face <60% width is rejected. Units per analysis: _pending (balance was 1,026)_
+8. [x] API tested Oct 6 on 2 faces (photos now in `photos/_retired/api-test/`): works, raw scores 0–100, higher looks better, `ui_score` differs a lot from raw. Face <60% width is rejected. Units per analysis: _pending (balance was 1,026)_
 8a. [x] `python scripts/noise_test.py photos/noise-sujeet --split --limit 2`: does YouCam accept the
        mirrored half-faces? If yes, run the full `--split` set and record the `L-R` floor too
 9. [ ] Run the full noise test and record the noise floor per concern below. Done: Sujeet.
@@ -113,13 +113,14 @@ day-00. Daily single photos are still taken and kept.
 11. [ ] Keep daily photos going
 12. [x] Choose backend and web stack, and record them in `ARCHITECTURE.md` (Oct 6: FastAPI + React/Vite, as Ringproof)
 13. [x] Analyzer module with local result cache (`app/analyzer.py`, shared with the noise script)
-14. [ ] Analyse trial photos so far; confirm which direction of `raw_score` is "better" per concern
+14. [x] Direction of `raw_score`: higher is better for every concern (YouCam docs, Oct 7). Shown as ↑
+        on every score column; changes are coloured ▲ better / ▼ worse only beyond the noise floor
 15. [x] Verdict engine with the noise-floor rule (pure function, VISION D1). Oct 7: `app/verdict.py`,
         tests in `tests/`, verdict on each Today card, claimed concerns per trial (Person → Edit).
         Baseline = day-00 + repeat photos; checkpoint = latest analysed day (one photo for now)
 15b. [ ] Checkpoint of 3 photos (day 7/14/21): the lab saves one photo per day, so extra checkpoint
         photos need a naming rule before day 7 (Oct 14)
-15c. [ ] Confirm which direction is better per concern (task 14); the verdict assumes higher is better
+15c. [x] Direction confirmed (task 14): the verdict's higher-is-better default is correct
 15a. [x] `trial.json` per trial: product, claim, treated side, start date (VISION D3). Lab is now organised by person: Today screen, person picker, day numbers from day 0, Retake
 16. [ ] Capture gate: brightness + face framing/pose (MediaPipe), day-0 ghost overlay
     - [x] Built in the lab app (`web/src/gate.ts`): Capture, Upload and Results screens. Checked on
@@ -128,6 +129,10 @@ day-00. Daily single photos are still taken and kept.
     - [x] Oct 7 fixes: same-camera and light-direction checks vs day 0, phone full-screen capture,
           day-0 camera picked automatically, Wi-Fi lock with QR unlock, fingerprint mismatch badge,
           notes field separate from the claim, test sets billed to their owner
+    - [x] Oct 7: background removed from every photo shown in the lab and on other devices
+          (originals stay on the PC, never sent to phones); countdown no longer restarts on one
+          jittery frame; "Matches day 0" is optional (recorded, not blocking); the Test kind is removed
+          (4 repeat photos had landed there by mistake); photos are Daily check-in or Repeat photos only
     - [ ] Tune thresholds from the day-0 session
 16a. [ ] Open the lab from anywhere (README "Open it from anywhere"). Code done Oct 7: FastAPI serves
        the built app, tunnel traffic counts as remote and needs the lab token, no caching of photos,

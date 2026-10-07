@@ -33,3 +33,5 @@
 .checks .label { color: var(--text); }
 .checks .value { color: var(--muted); font-size: 12px; text-align: right; }
 .checks .hint { grid-column: 2 / -1; color: var(--fail); font-size: 12px; }
+.checks .warn .mark, .checks .warn .hint { color: var(--muted); }
+

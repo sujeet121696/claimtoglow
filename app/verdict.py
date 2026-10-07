@@ -43,7 +43,8 @@ def concern_result(concern: str, baseline: list, checkpoint: list, noise: list, 
 
 def verdict(concerns: list, baseline: list, checkpoint: list, noise: list, final: bool, better: dict | None = None) -> dict:
     """The claim's verdict. `final` is True once the checkpoint is at or past the deadline.
-    `better` maps a concern to "higher" or "lower"; a concern not in it counts as higher-is-better."""
+    `better` maps a concern to "higher" or "lower"; a concern not in it counts as higher-is-better,
+    which YouCam's docs state for every raw_score ("A higher score indicates healthier ... skin")."""
     better = better or {}
     rows = [concern_result(c, baseline, checkpoint, noise, better.get(c, "higher")) for c in concerns]
     results = {r["result"] for r in rows}

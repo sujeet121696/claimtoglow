@@ -48,7 +48,13 @@ export type Metrics = {
 export type Reference = Pick<Metrics, "faceWidth" | "noseX" | "pitch" | "luma"> &
   Partial<Pick<Metrics, "lightSide" | "width" | "height">>;
 
-export type Check = { id: string; label: string; pass: boolean; value: string; hint: string };
+// optional: shown and recorded with the photo, but never blocks it.
+export type Check = { id: string; label: string; pass: boolean; value: string; hint: string; optional?: boolean };
+
+/** Every check that blocks a photo passes (optional ones only advise). */
+export function requiredPass(checks: Check[]): boolean {
+  return checks.length > 0 && checks.every((c) => c.pass || c.optional);
+}
 
 /** Landscape sources (laptop webcams) are cropped to a centred 3:4 portrait so the face can fill 60–80%. */
 export function portraitCrop(sw: number, sh: number): Crop {
@@ -220,9 +226,11 @@ export function evaluate(m: Metrics, ref?: Reference | null): Check[] {
         pass: same, hint: "Use the same camera, phone and mode as day 0",
       });
     }
+    // Optional since Oct 7: Sahni's matched repeat photos still differed from day 0 on texture by
+    // 3 SD, so matching didn't remove that noise; checkpoints average 3 photos instead.
     checks.push({
-      id: "match", label: "Matches day 0", value: misses.length ? `off: ${misses.join(", ")}` : "yes",
-      pass: misses.length === 0, hint: "Match day 0: same distance, position, time of day and light",
+      id: "match", label: "Matches day 0 (optional)", value: misses.length ? `off: ${misses.join(", ")}` : "yes",
+      pass: misses.length === 0, hint: "Optional: same distance, position, time of day and light as day 0", optional: true,
     });
   }
   return checks;
@@ -243,7 +251,7 @@ export function referenceFrom(meta: unknown): Reference | null {
 export type GateRecord = { passed: boolean; checks: Check[]; metrics: Metrics };
 
 export function gateRecord(checks: Check[], metrics: Metrics): GateRecord {
-  return { passed: checks.every((c) => c.pass), checks, metrics };
+  return { passed: requiredPass(checks), checks, metrics };
 }
 
 /** Runs the gate on a still image (an uploaded photo): the whole image, no crop. */

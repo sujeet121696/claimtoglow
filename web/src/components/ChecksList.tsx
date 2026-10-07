@@ -6,8 +6,8 @@ export function ChecksList({ checks, empty = "Waiting for a face…" }: { checks
   return (
     <ul className="checks">
       {checks.map((c) => (
-        <li key={c.id} className={c.pass ? "pass" : "fail"}>
-          <span className="mark" aria-hidden>{c.pass ? "✓" : "✗"}</span>
+        <li key={c.id} className={c.pass ? "pass" : c.optional ? "warn" : "fail"}>
+          <span className="mark" aria-hidden>{c.pass ? "✓" : c.optional ? "!" : "✗"}</span>
           <span className="label">{c.label}</span>
           <span className="value">{c.value}</span>
           {!c.pass && <span className="hint">{c.hint}</span>}

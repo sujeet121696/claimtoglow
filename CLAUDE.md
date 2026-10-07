@@ -10,7 +10,7 @@ counting only changes bigger than the measurement noise.
 |---|---|
 | Hackathon | YouCam API Skin AI & eCommerce VTO Hackathon (Perfect Corp, Devpost) |
 | Deadline | Nov 2, 2026, 11:45 am ET |
-| Team | Sujeet, Sahni and Suvaani (one trial each, own YouCam key each); eligible for Women in Tech |
+| Team | Sujeet, Sahni and Suvaani (all on the Devpost team; one trial and YouCam key each); eligible for Women in Tech |
 | Priority | Second to Ringproof (Nebius, Oct 30). Light work until Oct 29, full build Oct 30 – Nov 2 |
 | Status | Trials running since Oct 7 (lab, capture gate, noise test done; verdict engine next) |
 
