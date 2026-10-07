@@ -26,7 +26,8 @@ Skin apps tell you your score. Claim to Glow tells you whether the product kept 
 only when the evidence is strong enough to say so.
 
 > Built for the **YouCam API Skin AI & eCommerce VTO Hackathon** by Perfect Corp.
-> Status: **trials running** since Oct 7 (capture lab and noise test done). Deadline: Nov 2, 2026.
+> Status: **trials running** since Oct 7, 21 days (lab, noise test, verdict engine and claim agent
+> done). Submitting by Oct 26; deadline Nov 2, 2026.
 
 ## Run locally
 

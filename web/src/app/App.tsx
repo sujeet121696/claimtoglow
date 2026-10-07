@@ -7,6 +7,7 @@ import { ResultsPage } from "../features/results/ResultsPage";
 import { TodayPage } from "../features/today/TodayPage";
 import { UploadPage } from "../features/upload/UploadPage";
 import { Empty } from "../components/ui";
+import { InstallButton } from "./InstallButton";
 import { LockScreen } from "./LockScreen";
 import { href, PAGES, useRoute, type Page } from "./router";
 import { StoreProvider, useStore } from "./store";
@@ -37,6 +38,7 @@ function Shell() {
           ))}
         </nav>
         {people.length > 0 && <PersonPicker />}
+        <InstallButton />
       </header>
 
       <main className="page">

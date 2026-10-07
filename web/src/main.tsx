@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./app/App";
 import { adoptTokenFromUrl } from "./lib/labToken";
+import "./lib/install"; // listens for the install prompt from the first moment
 import "./styles/fonts.css";
 import "./styles/tokens.css";
 import "./styles/base.css";

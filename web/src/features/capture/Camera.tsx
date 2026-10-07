@@ -72,7 +72,13 @@ export function Camera({ setName, side, title, onSaved }: Props) {
     return (sameAsDay0 ?? last)?.deviceId;
   }
 
+  // Each start gets a number; a start overtaken by a newer one (auto-start plus a tap, or a camera
+  // switch) steps aside instead of reporting "play() was interrupted" as a failure.
+  const startSeq = useRef(0);
+
   async function start(id?: string) {
+    const seq = ++startSeq.current;
+    const stale = () => seq !== startSeq.current;
     stop();
     setError("");
     try {
@@ -85,9 +91,11 @@ export function Camera({ setName, side, title, onSaved }: Props) {
           height: { ideal: 1080 },
         },
       });
+      if (stale()) { stream.getTracks().forEach((t) => t.stop()); return; }
       const v = videoRef.current!;
       v.srcObject = stream;
       await v.play();
+      if (stale()) return;
       const track = stream.getVideoTracks()[0];
       const settings = track.getSettings();
       live.current.mirror = settings.facingMode !== "environment"; // selfie preview mirrors; saved photos never do
@@ -98,7 +106,9 @@ export function Camera({ setName, side, title, onSaved }: Props) {
       await getLandmarker("VIDEO");
       setRunning(true);
     } catch (e) {
-      setError(`Camera failed: ${(e as Error).message}. On a phone, open the https:// address (npm run dev:phone).`);
+      if (stale()) return;
+      const blocked = (e as Error).name === "NotAllowedError" || !window.isSecureContext;
+      setError(`Camera failed: ${(e as Error).message}.${blocked ? " Allow camera access, and on a phone open the https:// address." : " Tap Start camera again."}`);
     }
   }
 

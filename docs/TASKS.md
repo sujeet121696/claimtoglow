@@ -1,27 +1,32 @@
 # Tasks
 
-> Build plan. Deadline: **Nov 2, 2026, 11:45 am ET**. Target submit: **Nov 1** (1-day buffer).
-> Ringproof (Nebius, Oct 30) comes first. This project gets two weekends in October, then the
-> full build Oct 30 – Nov 1.
+> Build plan. Deadline: **Nov 2, 2026, 11:45 am ET** (10:15 pm IST).
+> **Decided Oct 8:** everything is finished and submitted **by Oct 26**, one week early. The trials
+> keep their 21 days (last check-in Oct 28), so the submission goes in with the day-14 verdict and
+> is updated with the day-21 verdict Oct 28–29.
 
 ## Milestones
 
 | # | Milestone | Target |
 |---|---|---|
-| M1 | Trial started, noise floor measured, go/no-go decided | Oct 11 (moved from Oct 5) |
-| M2 | Analyzer, verdict engine and capture gate working in code | Oct 18 |
-| M3 | Split-face trial complete (day 0 Oct 7, ≤21 days) | Oct 28 |
-| M4 | Full app deployed, demo video on YouTube | Nov 1 |
-| M5 | Submitted | Nov 1 |
+| M1 | Trial started, noise floor measured, go/no-go decided | Oct 7 ✓ |
+| M2 | Analyzer, verdict engine and capture gate working in code | Oct 7 ✓ |
+| M3 | 3-photo checkpoints built; day-7 checkpoint analysed | Oct 14 |
+| M4 | Receipt, timeline and judge demo link done; day-14 checkpoint analysed | Oct 21 |
+| M5 | Demo video on YouTube, Devpost text, repo public, **submitted** | **Oct 26** |
+| M6 | Day-21 checkpoint analysed, final verdict added to the submission | Oct 29 |
 
-## Time split with Ringproof
+## Week plan
 
-| Dates | Ringproof | Claim to Glow |
-|---|---|---|
-| Sep 28 – Oct 5 | Week 1 foundations | ≈2 h setup + daily photo |
-| Oct 6 – 18 | Core pipeline, dashboard | Daily photo + weekends Oct 10–11, Oct 17–18 |
-| Oct 19 – 29 | Polish, submit | **Daily photo only** + weekly analysis run (≈10 min) |
-| Oct 30 – Nov 1 | Done | Full build |
+| Dates | Work |
+|---|---|
+| Every day | Daily photo for all three (same camera, spot, light and time) |
+| Oct 8 – 13 (weekend Oct 10–11) | 15b 3-photo checkpoints, Sahni's extra repeat photo, social share (3), tune gate thresholds (16) |
+| **Oct 14 (day 7)** | Checkpoint: 3 fresh photos each, split-analysed |
+| Oct 15 – 20 (weekend Oct 17–18) | Timeline (21), receipt + badge (22), judge demo link (23) |
+| **Oct 21 (day 14)** | Checkpoint: 3 fresh photos each, split-analysed; verdict for the demo |
+| Oct 22 – 26 (weekend Oct 24–25) | Demo video (24), Devpost text (25), repo public (26), rules check and **submit (27)** |
+| **Oct 28 (day 21)** | Final checkpoint, final verdict; update receipt, video note and Devpost text before Nov 2 |
 
 ## Done
 - [x] Idea, name, repo, MIT license
@@ -40,7 +45,8 @@
         Team has 2 women, so it is eligible for the Women in Tech prize.
         Oct 7: both YouCam keys are in `.env` (`YOUCAM_API_SAHNI_KEY`, `YOUCAM_API_SUVAANI_KEY`) and
         accepted by the API, and all three keys are different. Oct 7: both joined the Devpost team.
-        Still to confirm: both redeemed their units (check each YouCam console)
+        Oct 8: units confirmed, billed analyses ran on each own key (Sahni 16, Suvaani 18). Balance
+        left: each checks their YouCam console
 
 **Trial (before day 0)**
 4. [ ] Pick one product with a specific claim of **21 days or less**. Photograph the claim on the box
@@ -73,20 +79,20 @@
        Apply only to that half, stopping at the nose line. Nose centred in frame for every photo
 5. [x] Fix the setup: same spot, same time of day, phone on a stand, the phone's front camera in the
        lab (one camera per person, checked by the gate), no filters or beauty mode, neutral face
-6. [ ] **Day-0 photo on Oct 7 (moved from Oct 3), before the first use**. Done: Sujeet (16:49 IST),
-       Sahni (19:00 IST). To do: Suvaani, then one photo every morning
+6. [x] **Day-0 photo on Oct 7 (moved from Oct 3), before the first use**. Done: Sujeet (16:49 IST),
+       Sahni (19:00 IST), Suvaani. Then one photo every day
        (before any product, sunscreen on the whole face after). One set per person: `trial-<person>`,
        e.g. `trial-sujeet`, named `day-00`, `day-01`, … automatically by the lab app
 
 **Noise test**
-7. [ ] In the same setup and sitting, take repeat photos into `noise-<person>` (≥5 each). Done:
-       Sujeet 5, Sahni 5 (all passed the gate). To do: Suvaani. Step out of frame and back between shots ("Fresh shots" in the lab enforces it)
+7. [x] In the same setup and sitting, take repeat photos into `noise-<person>` (≥5 each). Done:
+       Sujeet 5, Sahni 5, Suvaani 5 (all passed the gate). Step out of frame and back between shots ("Fresh shots" in the lab enforces it)
 8. [x] API tested Oct 6 on 2 faces (photos now in `photos/_retired/api-test/`): works, raw scores 0–100, higher looks better, `ui_score` differs a lot from raw. Face <60% width is rejected. Units per analysis: _pending (balance was 1,026)_
 8a. [x] `python scripts/noise_test.py photos/noise-sujeet --split --limit 2`: does YouCam accept the
        mirrored half-faces? If yes, run the full `--split` set and record the `L-R` floor too
-9. [ ] Run the full noise test and record the noise floor per concern below. Done: Sujeet.
-       To do: Sahni (168 units on her key), Suvaani
-10. [ ] **Go/no-go:** go if the claimed concern's noise floor is small next to a realistic change
+9. [x] Run the full noise test and record the noise floor per concern below. Done for all three
+       (split). Sahni's shot-02 was retaken Oct 8, 00:38 IST (the first one's right half was too dark)
+10. [x] **Go/no-go:** (Oct 7: go, with the changes in the finding below) go if the claimed concern's noise floor is small next to a realistic change
         (a few points). If it's huge, switch to the backup idea (Shaadi Look Planner)
 
 **Noise floor results**
@@ -109,7 +115,7 @@ most likely because window light shifted. **Decision (go, with changes):** fixed
 every day; each checkpoint (day 7, 14, 21) is 3 fresh photos averaged; day 0 = the 5 repeat photos +
 day-00. Daily single photos are still taken and kept.
 
-## Oct 6 – 18 · Daily photo + two weekends → M2
+## Oct 6 – 20 · Core, checkpoints, receipt → M2, M3, M4
 11. [ ] Keep daily photos going
 12. [x] Choose backend and web stack, and record them in `ARCHITECTURE.md` (Oct 6: FastAPI + React/Vite, as Ringproof)
 13. [x] Analyzer module with local result cache (`app/analyzer.py`, shared with the noise script)
@@ -119,7 +125,7 @@ day-00. Daily single photos are still taken and kept.
         tests in `tests/`, verdict on each Today card, claimed concerns per trial (Person → Edit).
         Baseline = day-00 + repeat photos; checkpoint = latest analysed day (one photo for now)
 15b. [ ] Checkpoint of 3 photos (day 7/14/21): the lab saves one photo per day, so extra checkpoint
-        photos need a naming rule before day 7 (Oct 14)
+        photos need a naming rule and the verdict must average them. **Due Oct 13** (before day 7)
 15c. [x] Direction confirmed (task 14): the verdict's higher-is-better default is correct
 15a. [x] `trial.json` per trial: product, claim, treated side, start date (VISION D3). Lab is now organised by person: Today screen, person picker, day numbers from day 0, Retake
 16. [ ] Capture gate: brightness + face framing/pose (MediaPipe), day-0 ghost overlay
@@ -133,26 +139,27 @@ day-00. Daily single photos are still taken and kept.
           (originals stay on the PC, never sent to phones); countdown no longer restarts on one
           jittery frame; "Matches day 0" is optional (recorded, not blocking); the Test kind is removed
           (4 repeat photos had landed there by mistake); photos are Daily check-in or Repeat photos only
-    - [ ] Tune thresholds from the day-0 session
-16a. [ ] Open the lab from anywhere (README "Open it from anywhere"). Code done Oct 7: FastAPI serves
-       the built app, tunnel traffic counts as remote and needs the lab token, no caching of photos,
-       "Open on phone" offers Anywhere / Same Wi-Fi with Copy link. To do: tunnel login, create and
-       DNS route, Access app with the 3 team emails, `PUBLIC_URL` in `.env`
-
-## Oct 19 – 29 · Daily photo only → M3
-17. [ ] Keep daily photos going (trial ends by Oct 24)
-18. [ ] Once a week, analyse the new photos (≈10 min) to catch setup problems early
-
-## Oct 30 – Nov 1 · Full build → M4, M5
-19. [ ] Analyse the final trial photos
+    - [x] Oct 8: View (full size) and Download on each photo in Results (the background-free copy);
+          camera no longer fails with "play() was interrupted" when it is started twice; "Install app"
+          in the top bar (Chrome prompt; iPhone: Share → Add to Home Screen)
+    - [ ] Tune thresholds from the day-0 session. **Due Oct 13**
+16a. [x] Open the lab from anywhere (README "Open it from anywhere"). Oct 7: live at
+       claimtoglow.kharidwise.com through a Cloudflare Tunnel, Access policy with the team emails,
+       then the lab token; `PUBLIC_URL` in `.env`
+17. [ ] Keep daily photos going until day 21 (Oct 28)
+18. [ ] Analyse each checkpoint the same day (Oct 14, 21, 28) to catch setup problems early
 20. [x] Claim agent: claim text → `{ concerns[], deadline_days }`. Oct 7: built (`app/llm.py`, `app/claim.py`,
         "Suggest from claim" in Person → Edit). Tested live on Groq, Gemini and NVIDIA. Real claims:
         face wash (full product page) → radiance, texture, moisture (all 3 models agree; set for Sujeet and
         Sahni); Demelan+ → age_spot, radiance (Suvaani's trial stays on dark circles, off-label)
-21. [ ] Web app: claim, capture, timeline and verdict screens
-22. [ ] Receipt page with photo hashes, plus the badge snippet
-23. [ ] Public demo link for judges (a read-only demo, not the live lab with real faces)
-24. [ ] Demo video (1–3 min): claim on the box → split-face trial → verdict, uploaded to YouTube
-25. [ ] Devpost text: problem, differentiation, how YouCam is used, why `raw_score` + noise floor
-26. [ ] Make the repo public (or share it with contact_event@PerfectCorp.com)
-27. [ ] Final check against the rules, then submit
+21. [ ] Web app: timeline screen (claim, capture and verdict exist). **Due Oct 20**
+22. [ ] Receipt page with photo hashes, plus the badge snippet. **Due Oct 20**
+23. [ ] Public demo link for judges (a read-only demo, not the live lab with real faces). **Due Oct 20**
+
+## Oct 21 – 29 · Submit early → M5, M6
+19. [ ] Analyse the day-14 checkpoint (Oct 21), then the final day-21 checkpoint (Oct 28)
+24. [ ] Demo video (1–3 min): claim on the box → split-face trial → verdict, uploaded to YouTube. **Due Oct 25**
+25. [ ] Devpost text: problem, differentiation, how YouCam is used, why `raw_score` + noise floor. **Due Oct 25**
+26. [ ] Make the repo public (or share it with contact_event@PerfectCorp.com). **Due Oct 26**
+27. [ ] Final check against the rules, then submit. **Due Oct 26**
+28. [ ] Day-21 final verdict into the receipt and the Devpost text. **Due Oct 29**
