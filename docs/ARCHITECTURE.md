@@ -152,6 +152,8 @@ missing.
 Comparing a mean of k photos with a mean of k0 baseline photos, the floor becomes
 2 × SD × √(1/k + 1/k0); with k = 3 and k0 = 6 that is 1.41 × SD instead of 2.83 × SD. Within-sitting
 SD understates day-to-day noise, so light and time of day must be fixed (see TASKS.md noise results).
+Checkpoint days are every 7th day and the last day; the lab names their photos `day-07`, `day-07b`,
+`day-07c` (`today_photos` in `app/trials.py`) and the verdict takes all photos of the latest day.
 
 **Direction (confirmed Oct 7, YouCam docs):** a higher `raw_score` is better for every concern, so
 "moved the claimed way" means up. The UI marks every score column ↑ and colours a change ▲ better /

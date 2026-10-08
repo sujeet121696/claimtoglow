@@ -6,7 +6,7 @@ import type { Side } from "../api/types";
 export type Kind = "trial" | "noise";
 
 export const KINDS: Record<Kind, { label: string; hint: string }> = {
-  trial: { label: "Daily check-in", hint: "One photo a day, named by days since day 0" },
+  trial: { label: "Daily check-in", hint: "One photo a day, named by days since day 0; 3 on day 7, 14 and 21" },
   noise: { label: "Repeat photos", hint: "Same sitting, step out between shots: measures noise" },
 };
 

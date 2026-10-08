@@ -11,7 +11,7 @@
 |---|---|---|
 | M1 | Trial started, noise floor measured, go/no-go decided | Oct 7 ✓ |
 | M2 | Analyzer, verdict engine and capture gate working in code | Oct 7 ✓ |
-| M3 | 3-photo checkpoints built; day-7 checkpoint analysed | Oct 14 |
+| M3 | 3-photo checkpoints built (Oct 8 ✓); day-7 checkpoint analysed | Oct 14 |
 | M4 | Receipt, timeline and judge demo link done; day-14 checkpoint analysed | Oct 21 |
 | M5 | Demo video on YouTube, Devpost text, repo public, **submitted** | **Oct 26** |
 | M6 | Day-21 checkpoint analysed, final verdict added to the submission | Oct 29 |
@@ -21,7 +21,7 @@
 | Dates | Work |
 |---|---|
 | Every day | Daily photo for all three (same camera, spot, light and time) |
-| Oct 8 – 13 (weekend Oct 10–11) | 15b 3-photo checkpoints, Sahni's extra repeat photo, social share (3), tune gate thresholds (16) |
+| Oct 8 – 13 (weekend Oct 10–11) | ~~15b 3-photo checkpoints~~ ✓, ~~Sahni's extra repeat photo~~ ✓, social share (3), tune gate thresholds (16) |
 | **Oct 14 (day 7)** | Checkpoint: 3 fresh photos each, split-analysed |
 | Oct 15 – 20 (weekend Oct 17–18) | Timeline (21), receipt + badge (22), judge demo link (23) |
 | **Oct 21 (day 14)** | Checkpoint: 3 fresh photos each, split-analysed; verdict for the demo |
@@ -123,9 +123,10 @@ day-00. Daily single photos are still taken and kept.
         on every score column; changes are coloured ▲ better / ▼ worse only beyond the noise floor
 15. [x] Verdict engine with the noise-floor rule (pure function, VISION D1). Oct 7: `app/verdict.py`,
         tests in `tests/`, verdict on each Today card, claimed concerns per trial (Person → Edit).
-        Baseline = day-00 + repeat photos; checkpoint = latest analysed day (one photo for now)
-15b. [ ] Checkpoint of 3 photos (day 7/14/21): the lab saves one photo per day, so extra checkpoint
-        photos need a naming rule and the verdict must average them. **Due Oct 13** (before day 7)
+        Baseline = day-00 + repeat photos; checkpoint = every analysed photo of the latest day
+15b. [x] Checkpoint of 3 photos (Oct 8): on day 7, 14 and 21 the lab names them `day-07`, `day-07b`,
+        `day-07c`, turns on "Step out between shots", shows 1/3 → 3/3 on Today, stops the camera at
+        3/3, and the verdict averages them (tests in `tests/test_checkpoints.py`)
 15c. [x] Direction confirmed (task 14): the verdict's higher-is-better default is correct
 15a. [x] `trial.json` per trial: product, claim, treated side, start date (VISION D3). Lab is now organised by person: Today screen, person picker, day numbers from day 0, Retake
 16. [ ] Capture gate: brightness + face framing/pose (MediaPipe), day-0 ghost overlay

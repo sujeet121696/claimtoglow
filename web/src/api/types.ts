@@ -44,6 +44,9 @@ export type Person = {
   day: number | null;
   checkins: string[];
   today_done: boolean;
+  today_count: number; // photos taken today
+  today_target: number; // 3 on a checkpoint day (day 7, 14, 21), else 1
+  today_next: string | null; // name of the next photo, e.g. day-07b
   noise_count: number;
   noise_target: number;
   day0: { url: string; masked_url: string | null; saved_at: string | null; gate_passed: boolean | null; failed: string[] } | null;
