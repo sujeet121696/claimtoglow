@@ -26,8 +26,8 @@ Skin apps tell you your score. Claim to Glow tells you whether the product kept 
 only when the evidence is strong enough to say so.
 
 > Built for the **YouCam API Skin AI & eCommerce VTO Hackathon** by Perfect Corp.
-> Status: **trials running** since Oct 7, 21 days (lab, noise test, verdict engine and claim agent
-> done). Submitting by Oct 26; deadline Nov 2, 2026.
+> Status: **trials running** since Oct 7, 21 days (lab, capture gate, noise test, verdict engine,
+> claim agent, hosting, checkpoints, timeline, receipt and judge demo done). Submitting by Oct 26; deadline Nov 2, 2026.
 
 ## Run locally
 
@@ -95,6 +95,21 @@ cloudflared --config ~/.cloudflared/claimtoglow.yml tunnel run
 Share the lab: Today → "Open on phone" → **Anywhere** → scan or Copy link. Two locks protect it:
 Cloudflare Access (team emails only) and the lab token in that link.
 
+## Judge demo (read-only, no faces)
+
+The trial's timeline and receipt with the real scores, but no photos (only their SHA-256
+fingerprints). Build the demo app once (again only after a web code change):
+
+```sh
+cd web && npm run build:demo        # demo app -> web/dist-demo/
+```
+
+The API then serves it at `/demo/` with live data, so it is always current: locally
+http://localhost:8000/demo/, publicly https://claimtoglow.kharidwise.com/demo/ once Cloudflare
+Access has a **Bypass / Everyone** policy for the path `demo`. Judges can reach it only while this
+PC, the API and the tunnel are running. For a static host instead, run
+`.venv/Scripts/python scripts/export_demo.py` and upload `web/dist-demo`.
+
 ## Noise test
 
 Before trusting any "−18%", measure how much scores move when nothing changed:
@@ -122,6 +137,7 @@ See [`docs/TASKS.md`](docs/TASKS.md) for how to take the photos.
 | [`docs/RULES.md`](docs/RULES.md) | Coding and workflow rules |
 | [`docs/DESIGN.md`](docs/DESIGN.md) | UI/UX direction |
 | [`docs/TASKS.md`](docs/TASKS.md) | Build checklist and progress |
+| [`docs/DEVPOST.md`](docs/DEVPOST.md) | Devpost submission text |
 | [`docs/VISION.md`](docs/VISION.md) | Post-hackathon AI agent and scaling decisions |
 
 ## License

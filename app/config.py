@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PHOTOS = ROOT / "photos"
 RESULTS = ROOT / "results"
 WEB_DIST = ROOT / "web" / "dist"  # built web app (npm run build), served by the API when present
+WEB_DEMO = ROOT / "web" / "dist-demo"  # read-only judge demo, served at /demo/ when present
 DEFAULT_BASE_URL = "https://yce-api-01.makeupar.com/s2s/v2.0"
 
 # Set and photo names become folder and file names, so keep them boring.

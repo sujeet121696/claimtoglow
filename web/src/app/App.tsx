@@ -1,15 +1,19 @@
 // App shell: top bar (brand, navigation, person) and the current page.
-import type { ComponentType } from "react";
+import { useEffect, type ComponentType } from "react";
 import { CapturePage } from "../features/capture/CapturePage";
 import { PersonEditor } from "../features/people/PersonEditor";
 import { PersonPicker } from "../features/people/PersonPicker";
+import { ReceiptPage } from "../features/receipt/ReceiptPage";
 import { ResultsPage } from "../features/results/ResultsPage";
+import { TimelinePage } from "../features/timeline/TimelinePage";
 import { TodayPage } from "../features/today/TodayPage";
 import { UploadPage } from "../features/upload/UploadPage";
+import { PageIcon } from "../components/icons";
 import { Empty } from "../components/ui";
 import { InstallButton } from "./InstallButton";
 import { LockScreen } from "./LockScreen";
-import { href, PAGES, useRoute, type Page } from "./router";
+import { DEMO } from "./mode";
+import { HOME, href, NAV, PAGES, useRoute, type Page } from "./router";
 import { StoreProvider, useStore } from "./store";
 
 const VIEWS: Record<Page, ComponentType> = {
@@ -17,37 +21,49 @@ const VIEWS: Record<Page, ComponentType> = {
   capture: CapturePage,
   upload: UploadPage,
   results: ResultsPage,
+  timeline: TimelinePage,
+  receipt: ReceiptPage,
 };
 
 function Shell() {
   const [route] = useRoute();
-  const { people, editing, locked } = useStore();
+  const { people, editing, locked, selectPerson } = useStore();
   const View = VIEWS[route.page];
   const needsPerson = route.page !== "today" && !people.length;
+  // Shared links name the person (#/receipt?person=sahni).
+  const linked = route.params.get("person");
+  useEffect(() => { if (linked) selectPerson(linked); }, [linked, selectPerson]);
 
   return (
     <div className="app">
       <header className="topbar">
-        <a className="brand" href={href("today")} aria-label="Claim to Glow home">
-          <img className="logo" src="/favicon.svg" alt="" width={34} height={34} />
+        <a className="brand" href={href(HOME)} aria-label="Claim to Glow home">
+          <img className="logo" src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width={34} height={34} />
           <span>Claim to <b>Glow</b></span>
         </a>
-        <nav aria-label="Main">
-          {(Object.keys(PAGES) as Page[]).map((p) => (
-            <a key={p} href={href(p)} aria-current={route.page === p ? "page" : undefined}>{PAGES[p]}</a>
+        {/* Top links on a wide screen, a bottom tab bar on a phone (base.css). */}
+        <nav className="main-nav" aria-label="Main">
+          {NAV.map((p) => (
+            <a key={p} href={href(p)} aria-current={route.page === p ? "page" : undefined}>
+              <PageIcon page={p} />
+              <span>{PAGES[p]}</span>
+            </a>
           ))}
         </nav>
         {people.length > 0 && <PersonPicker />}
-        <InstallButton />
+        {!DEMO && <InstallButton />}
       </header>
 
-      <main className="page">
+      <main className="page" key={route.page}>
         {locked ? (
           <LockScreen reason={locked} />
-        ) : needsPerson ? <Empty>Add a person on the Today page first.</Empty> : <View />}
+        ) : needsPerson ? <Empty>{DEMO ? "Loading the trial data…" : "Add a person on the Today page first."}</Empty> : <View />}
       </main>
 
-      <footer className="footer muted small">Cosmetic skin metrics only, not a diagnosis. Photos stay on this machine.</footer>
+      <footer className="footer muted small">
+        Cosmetic skin metrics only, not a diagnosis.{" "}
+        {DEMO ? "Read-only demo with the real trial data; photos are not included, only their fingerprints." : "Photos stay on this machine."}
+      </footer>
 
       {editing && <PersonEditor key={editing === "new" ? "new" : editing.person} />}
     </div>

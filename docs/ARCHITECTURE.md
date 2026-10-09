@@ -70,21 +70,26 @@ expression, mouth closed, eyes open. Errors to handle: `error_src_face_too_small
 ## Layout
 
 ```
-app/       FastAPI: youcam.py (client), analyzer.py (cache, split halves), noise.py,
+app/       FastAPI: config.py (paths, settings), youcam.py (client), analyzer.py (cache, split halves), noise.py,
            verdict.py (pure verdict rule), llm.py (providers), claim.py (claim agent),
            masking.py (background-free copies), trials.py (people, trial.json, day numbering,
-           retake, data for the verdict), main.py (API)
-web/src/   app/        shell, hash router (#/page?key=value), store (people, selected person)
+           retake, data for the verdict), receipt.py (timeline, receipt, badge), demo.py
+           (face-free demo data), main.py (API)
+web/src/   app/        shell, hash router (#/page?key=value), store (people, selected person),
+                       mode (DEMO: read-only build, data from data/ instead of the API)
            api/        typed client, one function per endpoint (future agent tools, VISION D1)
            domain/     trial rules: kinds, set names, labels, concerns (mirrors app/trials.py)
+           hooks/      useReference (day-0 metrics and ghost image), useLoad (page data)
            lib/        gate.ts (capture checks), landmarker, segmenter (person mask),
-                       gate and mask backfill, lab token, storage, beep
+                       gate and mask backfill, lab token, install (Install app), storage, beep
            components/ PageHeader, Card, Segmented, Field, Badge, ChecksList
-           features/   today, people, capture (Camera), upload (Uploader), results
+           features/   today, people, capture (Camera), upload (Uploader), results,
+                       timeline (TrendChart), receipt (badge snippet)
            styles/     tokens.css (colours, spacing), base.css, components.css
 web/dist/  built app (npm run build), served by FastAPI at /. Git-ignored
-scripts/   noise_test.py (CLI)
-tests/     unittest: verdict rule, claim agent and provider fallback (no network)
+web/dist-demo/ judge demo app (npm run build:demo), served at /demo/ with live data. Git-ignored
+scripts/   noise_test.py (CLI), export_demo.py (demo as a static site, only for a static host)
+tests/     unittest: verdict rule, checkpoint days and names, receipt hash and badge, claim agent and provider fallback (no network)
 photos/    <set>/<stem>.jpg + <stem>.meta.json (gate result, SHA-256). Git-ignored
            <set>/_mask/<stem>.png (person mask) + <stem>.jpg (room replaced by flat grey)
            trial-<person>/trial.json: product, claim, claimed concerns, treated side, day 0, length.
@@ -100,13 +105,16 @@ results/   <set>/<stem>.json, <set>-split/<stem>-L.json. Git-ignored
 | Module | Input | Output | Status |
 |---|---|---|---|
 | Claim agent | Claim text + product | `{ concerns[], deadline_days, rationale, model }`, concerns checked against the allowed list | `app/claim.py`, `POST /api/claims/parse`; "Suggest from claim" in Person → Edit, a person confirms |
-| Capture gate | Camera frame or photo + day-0 reference | pass/fail per check + hint | `web/src/gate.ts`; thresholds untuned |
+| Capture gate | Camera frame or photo + day-0 reference | pass/fail per check + hint | `web/src/lib/gate.ts`; thresholds checked on all 21 photos (Oct 8) |
 | Analyzer | Accepted photo | `{ concern: raw_score }`, cached locally | `app/analyzer.py` |
 | Noise floor | Repeat-photo scores | Per-concern floor (2√2 × SD) | `app/noise.py` |
 | Verdict engine | Claimed concerns, T − C per photo (baseline, checkpoint, repeats) | met / not met / not enough evidence, per-concern effect and floor | `app/verdict.py` + `trial_verdict` in `app/trials.py`; shown on Today; `GET /api/people/{person}/verdict` |
-| Receipt | Everything above + photo SHA-256 hashes | Public page + badge snippet | Hashes stored; page not started |
+| Timeline | Daily photos, T − C, baseline, repeat-photo SD | Chart per claimed concern with the noise band; check-in table | `timeline()` in `app/receipt.py`, `GET /api/people/{person}/timeline`, Timeline page |
+| Receipt | Claim, verdict, every photo's SHA-256 | Face-free record + `receipt_hash` (SHA-256 of its canonical JSON, without the time) + SVG badge | `receipt()`, `badge_svg()` in `app/receipt.py`; `GET /api/people/{person}/receipt`, `/badge.svg`; Receipt page |
+| Judge demo | Timeline, receipt, badge without photo links, notes or key names | Read-only site at `/demo/`, data live from `/demo/data/` (public) | `app/demo.py`, `npm run build:demo` → `web/dist-demo/`; `scripts/export_demo.py` for a static host |
 
-**Access:** `/api` and `/files` answer this PC freely; the app shell is public. Any other device
+**Access:** `/api` and `/files` answer this PC freely; the app shell and `/demo/` (no faces) are
+public, though through the tunnel Cloudflare Access still asks for a team email. Any other device
 needs the lab token as a cookie, set by opening the link from Today → "Open on phone" (QR or Copy
 link): **Same Wi-Fi** (LAN URL, via Vite) or **Anywhere** (`PUBLIC_URL`, via the tunnel). The token
 comes from `LAB_TOKEN` in `.env`, else is generated once into `.lab_token` (git-ignored).
@@ -127,8 +135,9 @@ comes from `LAB_TOKEN` in `.env`, else is generated once into `.lab_token` (git-
 **Capture gate checks:** one face; face width 55–78% of the image; whole face in frame; nose on
 the centre line (±3%, needed for the split); yaw/roll; chin level; neutral face (blendshapes);
 brightness and glare; even light on both halves (≤10%); short side ≥ 480 px; and, once day 0
-exists, the same camera (image size) and an optional match to day 0 (distance, position, chin,
-brightness, light side): shown and recorded, but it doesn't block the photo (Oct 7: matched repeat
+exists, the same camera (image size), the same distance (face width within ±8% of image width of
+day 0's; required since Oct 8, after two day-1 photos came out at 58% vs 76%), and an optional match
+to day 0 (position, chin, brightness, light side): shown and recorded, but it doesn't block the photo (Oct 7: matched repeat
 photos still differed from day 0, so checkpoints average 3 photos instead). The camera page picks day 0's camera automatically, starts by itself
 once permitted (a newer start, e.g. a tap on Start camera, replaces an older one instead of failing), keeps the screen awake, and auto-captures by default on phones. A check must fail
 for 0.4 s before the countdown restarts (landmark jitter), and a photo is only taken on a passing frame. Landscape cameras are cropped to 3:4.
@@ -153,7 +162,8 @@ Comparing a mean of k photos with a mean of k0 baseline photos, the floor become
 2 × SD × √(1/k + 1/k0); with k = 3 and k0 = 6 that is 1.41 × SD instead of 2.83 × SD. Within-sitting
 SD understates day-to-day noise, so light and time of day must be fixed (see TASKS.md noise results).
 Checkpoint days are every 7th day and the last day; the lab names their photos `day-07`, `day-07b`,
-`day-07c` (`today_photos` in `app/trials.py`) and the verdict takes all photos of the latest day.
+`day-07c` (`today_photos` in `app/trials.py`) and the verdict takes all photos of the latest
+checkpoint day; other analysed days don't count.
 
 **Direction (confirmed Oct 7, YouCam docs):** a higher `raw_score` is better for every concern, so
 "moved the claimed way" means up. The UI marks every score column ↑ and colours a change ▲ better /

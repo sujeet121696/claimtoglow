@@ -16,18 +16,20 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import Body, FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .analyzer import DEFAULT_ACTIONS, analyze_cached, cached_scores, mirror_halves, photo_files, result_dir
 from .claim import parse_claim
-from .config import NAME_RE, PHOTOS, WEB_DIST, key_var_for, lab_token, person_of, public_url
+from .config import NAME_RE, PHOTOS, WEB_DEMO, WEB_DIST, key_var_for, lab_token, person_of, public_url
 from .llm import LLMError
 from .masking import MASK_DIR, blanked_path, save_mask
 from .noise import noise_rows, split_pairs
-from .trials import (PERSON_RE, day_of, people, read_trial, retire, retire_stale_results, summary, today_photos,
-                     trial_verdict, write_trial)
+from .demo import demo_people, demo_timeline
+from .receipt import badge_svg, receipt, timeline
+from .trials import (PERSON_RE, day_of, people, read_meta, read_trial, retire, retire_stale_results, summary,
+                     today_photos, trial_verdict, write_trial)
 from .youcam import YouCam, YouCamError
 
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
@@ -82,6 +84,8 @@ async def lock_remote_devices(request: Request, call_next):
     response = await call_next(request)
     if private:
         response.headers["Cache-Control"] = "private, no-store"  # Cloudflare and browsers never keep faces or scores
+    elif request.url.path.startswith("/demo/data/"):
+        response.headers["Cache-Control"] = "no-store"  # live demo data: Cloudflare and browsers never keep a stale copy
     return response
 
 
@@ -113,11 +117,6 @@ def find_photo(name: str, stem: str) -> Path:
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def read_meta(photo: Path):
-    meta = photo.with_suffix(".meta.json")
-    return json.loads(meta.read_text(encoding="utf-8")) if meta.exists() else None
 
 
 def photo_info(name: str, photo: Path, whole: dict, halves: dict) -> dict:
@@ -154,6 +153,8 @@ def next_stem(name: str) -> str:
         if day is not None:
             if day < 0:
                 raise HTTPException(400, f"The trial starts on {trial['start_date']}.")
+            if day > trial["duration_days"]:
+                raise HTTPException(400, f"The trial ended on day {trial['duration_days']}.")
             today = today_photos(trial, day, taken)
             if today["next"] is None:
                 done = "all 3 check-in photos" if today["target"] > 1 else f"today's check-in (day-{day:02d})"
@@ -308,7 +309,7 @@ def lab_link():
 
 @app.get("/api/people")
 def list_people():
-    return {"people": [summary(p, read_meta) for p in people()], "today": date.today().isoformat()}
+    return {"people": [summary(p) for p in people()], "today": date.today().isoformat()}
 
 
 class ClaimText(BaseModel):
@@ -334,6 +335,27 @@ def person_verdict(person: str):
     return trial_verdict(person)
 
 
+@app.get("/api/people/{person}/timeline")
+def person_timeline(person: str):
+    if person not in people():
+        raise HTTPException(404, f"No trial for {person!r}")
+    return timeline(person)
+
+
+@app.get("/api/people/{person}/receipt")
+def person_receipt(person: str):
+    if person not in people():
+        raise HTTPException(404, f"No trial for {person!r}")
+    return receipt(person)
+
+
+@app.get("/api/people/{person}/badge.svg")
+def person_badge(person: str):
+    if person not in people():
+        raise HTTPException(404, f"No trial for {person!r}")
+    return Response(badge_svg(trial_verdict(person)["status"]), media_type="image/svg+xml")
+
+
 @app.put("/api/people/{person}")
 def save_person(person: str, fields: TrialFields):
     if not PERSON_RE.match(person):
@@ -341,7 +363,7 @@ def save_person(person: str, fields: TrialFields):
     data = fields.model_dump()
     data["start_date"] = fields.start_date.isoformat() if fields.start_date else None
     write_trial(person, data)
-    return summary(person, read_meta)
+    return summary(person)
 
 
 @app.get("/api/sets/{name}/noise")
@@ -368,7 +390,28 @@ def reference(name: str):
 
 app.mount("/files/photos", StaticFiles(directory=PHOTOS), name="photos")
 
+# Read-only judge demo: live, face-free data (public, like the app shell), so the demo is always
+# current. The demo app itself is built once with `npm run build:demo`.
+@app.get("/demo/data/people.json")
+def demo_people_data():
+    return demo_people()
+
+
+@app.get("/demo/data/{person}/{file}")
+def demo_person_data(person: str, file: Literal["timeline.json", "receipt.json", "badge.svg"]):
+    if person not in people():
+        raise HTTPException(404, f"No trial for {person!r}")
+    if file == "timeline.json":
+        return demo_timeline(person)
+    if file == "receipt.json":
+        return receipt(person)
+    return Response(badge_svg(trial_verdict(person)["status"]), media_type="image/svg+xml")
+
+
+if WEB_DEMO.is_dir():
+    app.mount("/demo", StaticFiles(directory=WEB_DEMO, html=True), name="demo")
+
 # The built web app (npm run build), so one server on one port can sit behind the tunnel.
-# Mounted last: every /api and /files route above wins.
+# Mounted last: every /api, /files and /demo route above wins.
 if WEB_DIST.is_dir():
     app.mount("/", StaticFiles(directory=WEB_DIST, html=True), name="web")

@@ -13,7 +13,7 @@ import urllib.request
 from .config import load_env
 
 DEFAULT_ORDER = ["groq", "gemini", "nvidia", "anthropic"]
-DEFAULT_MODELS = {  # each tested live on Oct 7, 2026 (models retire: override with <PROVIDER>_MODEL)
+DEFAULT_MODELS = {  # free tiers; models retire, so each can be overridden with <PROVIDER>_MODEL
     "groq": "openai/gpt-oss-120b",
     "gemini": "gemini-3.5-flash-lite",
     "nvidia": "nvidia/nemotron-3-super-120b-a12b",

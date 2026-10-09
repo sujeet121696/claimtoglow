@@ -1,10 +1,14 @@
 .env
-photos/
-results/
+.lab_token
+# Faces and scores stay local. Anchored to the root so web/src/features/results/ is still tracked.
+/photos/
+/results/
 __pycache__/
 node_modules/
 .DS_Store
 .venv/
 web/dist/
+web/dist-demo/
 web/public/mediapipe/
-.lab_token
+.vite/
+*.tsbuildinfo

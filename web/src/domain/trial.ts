@@ -49,3 +49,10 @@ export function changeResult(delta: number | null, floor: number | undefined): C
   if (Math.abs(delta) <= floor) return "no clear change";
   return delta > 0 ? "improved" : "worsened";
 }
+
+/** Badge tone for a verdict status. */
+export const statusTone = (s: string): "pass" | "fail" | "neutral" => (s === "met" ? "pass" : s === "not met" ? "fail" : "neutral");
+
+/** When a photo was saved, in local time ("8 Oct, 4:56 pm"). */
+export const savedAt = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "–";

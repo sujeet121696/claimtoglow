@@ -23,6 +23,8 @@ class CheckpointTest(unittest.TestCase):
         self.assertEqual(today_photos(TRIAL, 7, {"day-07", "day-07c"})["next"], "day-07b")
         self.assertEqual(today_photos(TRIAL, 7, {"day-07", "day-07b", "day-07c"})["next"], None)
         self.assertEqual(today_photos(TRIAL, 8, {"day-08"}), {"count": 1, "target": 1, "next": None})
+        self.assertEqual(today_photos(TRIAL, 22, set())["target"], 0)  # trial finished
+        self.assertEqual(today_photos(TRIAL, None, set())["target"], 1)  # no start date: day 0 still needed
 
 
 if __name__ == "__main__":

@@ -1,21 +1,26 @@
 .people-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-4); }
 
-.person-card { display: grid; gap: var(--space-3); align-content: start; }
-.person-head { display: flex; justify-content: space-between; align-items: start; gap: var(--space-2); }
+/* A soft lavender band at the top, a gentle lift under the mouse, a quiet fade-in. */
+.person-card {
+  display: grid; gap: var(--space-3); align-content: start;
+  background: linear-gradient(180deg, var(--note-bg), var(--surface) 96px);
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: card-in 0.35s ease-out both;
+}
+.person-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); }
 .person-head > div { min-width: 0; }
 .person-head h2 { margin: 0; font-size: 18px; }
 .person-head p { margin: 2px 0 0; }
 
-.progress { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
-.progress span { display: block; height: 100%; background: var(--brand-green); }
-
 .tasks { list-style: none; margin: 0; padding: 0; }
-.tasks li { display: grid; grid-template-columns: 18px 1fr auto; align-items: center; gap: var(--space-2); padding: var(--space-2) 0; border-top: 1px solid var(--border); }
+.tasks li { display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: var(--space-2); padding: var(--space-2) 0; border-top: 1px solid var(--border); }
 .task-actions { display: inline-flex; gap: 4px; }
 
 .day0 { display: grid; grid-template-columns: 64px 1fr; gap: var(--space-3); border-top: 1px solid var(--border); padding-top: var(--space-3); }
+.day0.with-latest { grid-template-columns: 64px 1fr 64px 1fr; }
 .day0 img { width: 64px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); }
-.day0-title { display: flex; align-items: center; gap: var(--space-2); }
+.day0-title { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--space-2); }
+.day0-title b { white-space: nowrap; }
 .day0 p { margin: 4px 0 0; }
 .verdict { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .concern-changes { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
@@ -23,3 +28,37 @@
 .concern-changes .change.better { color: var(--pass); font-weight: 700; }
 .concern-changes .change.worse { color: var(--fail); font-weight: 700; }
 .concern-changes .change.steady, .concern-changes .change.unknown { color: var(--muted); }
+
+.people-grid > :nth-child(2) { animation-delay: 0.05s; }
+.people-grid > :nth-child(3) { animation-delay: 0.1s; }
+.people-grid > :nth-child(n + 4) { animation-delay: 0.15s; }
+@keyframes card-in { from { opacity: 0; } }
+@media (hover: hover) {
+  .person-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgb(10 37 64 / 0.08); }
+}
+
+.day-ring .ring-track { fill: var(--surface); stroke: var(--border); stroke-width: 5; }
+.day-ring .ring-fill {
+  fill: none; stroke: var(--brand-green); stroke-width: 5; stroke-linecap: round;
+  transform: rotate(-90deg); transform-origin: 28px 28px;
+  stroke-dashoffset: var(--ring-offset);
+  animation: ring-fill 0.9s ease-out;
+}
+@keyframes ring-fill { from { stroke-dashoffset: var(--ring-length); } }
+.day-ring .ring-tick { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1.4; }
+.day-ring .ring-tick.reached { fill: var(--accent); stroke: var(--accent); }
+.day-ring .ring-day { font: 800 16px var(--font-display); fill: var(--text); }
+.day-ring .ring-of { font: 600 8px var(--font-body); fill: var(--muted); }
+
+.next-checkpoint { margin: 0; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--surface); border: 1px dashed var(--border-strong); color: var(--muted); }
+
+/* Task ticks as small round badges. */
+.tasks li > span:first-child { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; }
+.tasks li > .pass:first-child { background: var(--pass-bg); color: var(--pass); }
+.tasks li > .todo:first-child { border: 2px solid var(--border-strong); color: transparent; }
+
+@media (max-width: 640px) {
+  .people-grid { grid-template-columns: 1fr; }
+  .day0.with-latest { grid-template-columns: 56px 1fr 56px 1fr; gap: var(--space-2); }
+  .day0 img { width: 56px; height: 72px; }
+}

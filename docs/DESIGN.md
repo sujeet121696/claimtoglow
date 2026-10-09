@@ -28,6 +28,10 @@
 
 | Palette from KharidWise (Oct 7) | One visual family across projects. Deep Navy `#0A2540` text and primary buttons, link blue `#0077B6`, AI Green `#00C853` for fills only (2.2:1 on white, so small "pass" text uses `#007A36`), Cyan `#00B0FF` for dark-mode actions, Lavender note background `#F3EFFA`, page `#F6F4FB`. Tokens in `web/src/styles/tokens.css` |
 | Lab is organised by person (Oct 7) | Users think "my trial", not "photo sets": person picker, Today screen, Daily check-in / Repeat photos instead of typed set names |
+| Phone layout (Oct 9) | Below 640 px the pages become a bottom tab bar with icons (thumb reach, like a native app); the top row keeps only the brand, the person and Install. Nothing may be wider than the screen: wide tables and option switches scroll inside themselves, the first table column stays pinned. 40 px tap targets on touch screens; safe areas for notched phones |
+| Progress as a ring (Oct 9) | Each Today card shows the day in a ring with a tick per checkpoint, plus "Next checkpoint: day 7, in 5 days", so the plan is visible at a glance |
+| Motion is quiet (Oct 9) | Pages fade in, cards appear one after another, the ring fills on load. Opacity only (a transform would trap the full-screen camera), and none at all when the device asks for reduced motion |
+| Charts at real size (Oct 9) | The timeline chart is drawn at the width it is shown, so its text is the same size on a phone and a laptop |
 
 ## 4. Open questions
 
