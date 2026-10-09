@@ -49,7 +49,7 @@ verdict. Those are pure functions anyone can re-run from the receipt.
 
 | Phase | When | What ships |
 |---|---|---|
-| P0 Hackathon | Nov 2 | Lab, 3 real trials, verdict, receipt, badge mockup |
+| P0 Hackathon | Oct 26 (deadline Nov 2) | Lab, 3 real trials, verdict, receipt, badge mockup |
 | P1 Personal agent | Nov–Dec | Phone-first web app (PWA): paste a product link → the agent plans and runs your trial with daily nudges |
 | P2 Verified results for brands | Q1 2027 | A brand sponsors a cohort (e.g. 20 volunteers), gets a report and an embeddable badge; Shopify/marketplace embed |
 | P3 Claims index | Later | Public page per product: "measured on 41 people: texture +3.1, radiance no change". Only verified trials count |

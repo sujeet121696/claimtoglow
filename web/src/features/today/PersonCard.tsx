@@ -15,6 +15,7 @@ export function PersonCard({ person: p }: { person: Person }) {
   const { selectPerson, edit } = useStore();
   const progress = p.day === null ? 0 : Math.min(1, Math.max(0, p.day / p.duration_days));
   const noiseDone = p.noise_count >= p.noise_target;
+  const checkpoint = p.today_target > 1; // day 7, 14, 21: three fresh photos, averaged
   // Same time of day as day 0 means the same light.
   const day0Time = p.day0?.saved_at
     ? new Date(p.day0.saved_at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
@@ -51,8 +52,10 @@ export function PersonCard({ person: p }: { person: Person }) {
         <li>
           <span className={p.today_done ? "pass" : "todo"} aria-hidden>{p.today_done ? "✓" : "○"}</span>
           <span>
-            Today's photo{p.day !== null && p.day >= 0 ? ` · ${dayStem(p.day)}` : ""}
+            {checkpoint ? `Checkpoint · ${p.today_count}/${p.today_target} photos` : "Today's photo"}
+            {p.day !== null && p.day >= 0 ? ` · ${p.today_next ?? dayStem(p.day)}` : ""}
             {day0Time && !p.today_done && <span className="muted small"> · around {day0Time}</span>}
+            {checkpoint && !p.today_done && <span className="muted small"> · step out of frame between shots</span>}
           </span>
           {!p.today_done && <Actions kind="trial" />}
         </li>

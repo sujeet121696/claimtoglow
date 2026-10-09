@@ -26,7 +26,8 @@ from .config import NAME_RE, PHOTOS, WEB_DIST, key_var_for, lab_token, person_of
 from .llm import LLMError
 from .masking import MASK_DIR, blanked_path, save_mask
 from .noise import noise_rows, split_pairs
-from .trials import PERSON_RE, day_of, people, read_trial, retire, retire_stale_results, summary, trial_verdict, write_trial
+from .trials import (PERSON_RE, day_of, people, read_trial, retire, retire_stale_results, summary, today_photos,
+                     trial_verdict, write_trial)
 from .youcam import YouCam, YouCamError
 
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
@@ -143,18 +144,21 @@ def masked_url(name: str, stem: str):
 
 
 def next_stem(name: str) -> str:
-    """Daily photos are named by days since the trial's start; other sets count up (shot-NN)."""
+    """Daily photos are named by days since the trial's start (day-07, day-07b, day-07c on a
+    checkpoint day); other sets count up (shot-NN)."""
     taken = {p.stem for p in photo_files(set_dir(name))}
     person = person_of(name)
     if name.startswith("trial-") and person:
-        day = day_of(read_trial(person))
+        trial = read_trial(person)
+        day = day_of(trial)
         if day is not None:
             if day < 0:
-                raise HTTPException(400, f"The trial starts on {read_trial(person)['start_date']}.")
-            stem = f"day-{day:02d}"
-            if stem in taken:
-                raise HTTPException(409, f"Today's check-in ({stem}) already exists. Use Retake on it first.")
-            return stem
+                raise HTTPException(400, f"The trial starts on {trial['start_date']}.")
+            today = today_photos(trial, day, taken)
+            if today["next"] is None:
+                done = "all 3 check-in photos" if today["target"] > 1 else f"today's check-in (day-{day:02d})"
+                raise HTTPException(409, f"Already have {done}. Use Retake on one first.")
+            return today["next"]
     prefix = "day" if name.startswith("trial") else "shot"
     n = 0
     while f"{prefix}-{n:02d}" in taken:

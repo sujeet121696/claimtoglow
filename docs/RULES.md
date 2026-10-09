@@ -35,7 +35,7 @@
 - **Never commit or push.** The user commits manually.
 - Update `TASKS.md` as tasks start and finish.
 - Update `ARCHITECTURE.md` when the stack or modules change, and `PRD.md` when scope changes.
-- Ringproof comes first until Oct 29.
+- Submit by Oct 26, one week before the deadline; only the day-21 verdict comes after (by Oct 29).
 
 ## 5. Hackathon compliance
 

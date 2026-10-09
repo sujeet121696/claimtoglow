@@ -122,7 +122,7 @@ comes from `LAB_TOKEN` in `.env`, else is generated once into `.lab_token` (git-
   Masks are made in the browser (MediaPipe selfie segmenter, CPU) right after each capture or
   upload, and by the lab PC for any photo still without one. The API refuses an empty mask (<5% person). YouCam still analyses the originals: on Oct 7, blanked
   copies shifted radiance by +1.9 and +3.7 (0.6–1.2 noise SD, same direction), so mixing the two
-  would fake a change.
+  would fake a change. Results offers View and Download per photo, of that same background-free copy.
 
 **Capture gate checks:** one face; face width 55–78% of the image; whole face in frame; nose on
 the centre line (±3%, needed for the split); yaw/roll; chin level; neutral face (blendshapes);
@@ -130,7 +130,7 @@ brightness and glare; even light on both halves (≤10%); short side ≥ 480 px;
 exists, the same camera (image size) and an optional match to day 0 (distance, position, chin,
 brightness, light side): shown and recorded, but it doesn't block the photo (Oct 7: matched repeat
 photos still differed from day 0, so checkpoints average 3 photos instead). The camera page picks day 0's camera automatically, starts by itself
-once permitted, keeps the screen awake, and auto-captures by default on phones. A check must fail
+once permitted (a newer start, e.g. a tap on Start camera, replaces an older one instead of failing), keeps the screen awake, and auto-captures by default on phones. A check must fail
 for 0.4 s before the countdown restarts (landmark jitter), and a photo is only taken on a passing frame. Landscape cameras are cropped to 3:4.
 
 ## 5. Verdict rule (draft)
@@ -152,6 +152,8 @@ missing.
 Comparing a mean of k photos with a mean of k0 baseline photos, the floor becomes
 2 × SD × √(1/k + 1/k0); with k = 3 and k0 = 6 that is 1.41 × SD instead of 2.83 × SD. Within-sitting
 SD understates day-to-day noise, so light and time of day must be fixed (see TASKS.md noise results).
+Checkpoint days are every 7th day and the last day; the lab names their photos `day-07`, `day-07b`,
+`day-07c` (`today_photos` in `app/trials.py`) and the verdict takes all photos of the latest day.
 
 **Direction (confirmed Oct 7, YouCam docs):** a higher `raw_score` is better for every concern, so
 "moved the claimed way" means up. The UI marks every score column ↑ and colours a change ▲ better /

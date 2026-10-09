@@ -3,6 +3,8 @@
 Each person's trial lives in photos/trial-<person>/ with a trial.json manifest:
 product, treated side, start date, length. Daily photos are named by days since the start
 (day-00, day-01, ...), so a skipped day stays a gap instead of shifting later photos.
+Checkpoint days (every 7th day and the last day) take 3 fresh photos: day-07, day-07b, day-07c.
+The verdict averages them, which narrows the noise floor.
 """
 
 import json
@@ -19,6 +21,9 @@ from .verdict import verdict
 PERSON_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,30}$")
 DEFAULTS = {"product": "", "claim": "", "concerns": [], "notes": "", "treated_side": "L", "start_date": None, "duration_days": 21}
 NOISE_TARGET = 5
+CHECKPOINT_EVERY = 7
+CHECKPOINT_PHOTOS = 3
+DAY_STEM = re.compile(r"^day-(\d{2})([b-z]?)$")  # day-07, day-07b, day-07c
 
 
 def manifest_path(person: str):
@@ -51,6 +56,25 @@ def day_of(trial: dict, on: date | None = None):
     return ((on or date.today()) - date.fromisoformat(trial["start_date"])).days
 
 
+def is_checkpoint(trial: dict, day: int) -> bool:
+    return day > 0 and (day % CHECKPOINT_EVERY == 0 or day == trial["duration_days"])
+
+
+def day_stems(trial: dict, day: int) -> list:
+    """The photo names a day needs: one, or three on a checkpoint day."""
+    stem = f"day-{day:02d}"
+    return [stem, f"{stem}b", f"{stem}c"][:CHECKPOINT_PHOTOS] if is_checkpoint(trial, day) else [stem]
+
+
+def today_photos(trial: dict, day, taken: set) -> dict:
+    """Today's photos: how many are taken, how many are needed, and the next name (None when done)."""
+    if day is None or day < 0:
+        return {"count": 0, "target": 1, "next": None}
+    stems = day_stems(trial, day)
+    missing = [s for s in stems if s not in taken]
+    return {"count": len(stems) - len(missing), "target": len(stems), "next": missing[0] if missing else None}
+
+
 def summary(person: str, read_meta) -> dict:
     """Everything the Today screen needs for one person."""
     trial = read_trial(person)
@@ -59,12 +83,16 @@ def summary(person: str, read_meta) -> dict:
     day = day_of(trial)
     day0_meta = (read_meta(day0) or {}) if day0 else {}
     gate = day0_meta.get("gate")
+    today = today_photos(trial, day, {p.stem for p in daily})
     return {
         **trial,
         "key_var": key_var_for(f"trial-{person}"),
         "day": day,
         "checkins": [p.stem for p in daily],
-        "today_done": day is not None and f"day-{day:02d}" in {p.stem for p in daily},
+        "today_done": day is not None and day >= 0 and today["next"] is None,
+        "today_count": today["count"],
+        "today_target": today["target"],
+        "today_next": today["next"],
         "noise_count": len(photo_files(PHOTOS / f"noise-{person}")),
         "noise_target": NOISE_TARGET,
         "verdict": {k: v for k, v in trial_verdict(person).items() if k in ("status", "reason", "concerns")},
@@ -124,14 +152,19 @@ def treated_minus_control(set_name: str, treated_side: str) -> dict:
 
 
 def trial_verdict(person: str) -> dict:
-    """Baseline = day-00 + the repeat photos; checkpoint = the latest analysed day after day 0."""
+    """Baseline = day-00 + the repeat photos; checkpoint = every analysed photo of the latest day
+    after day 0 (three on a checkpoint day: day-07, day-07b, day-07c)."""
     trial = read_trial(person)
     daily = treated_minus_control(f"trial-{person}", trial["treated_side"])
     repeats = treated_minus_control(f"noise-{person}", trial["treated_side"])
-    days = sorted(int(s[4:]) for s in daily if re.fullmatch(r"day-\d{2}", s) and s != "day-00")
-    day = days[-1] if days else None
+    by_day = {}
+    for stem, series in daily.items():
+        m = DAY_STEM.match(stem)
+        if m and int(m.group(1)) > 0:
+            by_day.setdefault(int(m.group(1)), []).append(series)
+    day = max(by_day) if by_day else None
     baseline = ([daily["day-00"]] if "day-00" in daily else []) + list(repeats.values())
-    checkpoint = [daily[f"day-{day:02d}"]] if day is not None else []
+    checkpoint = by_day.get(day, [])
     result = verdict(trial["concerns"], baseline, checkpoint, list(repeats.values()),
                      final=day is not None and day >= trial["duration_days"])
     return {**result, "person": person, "checkpoint_day": day, "duration_days": trial["duration_days"]}

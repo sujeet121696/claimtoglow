@@ -93,9 +93,9 @@ G2 and G4 are the core. Without them this is just another skin tracker.
 ## 7. Scope
 
 **In (hackathon demo)**
-- Real split-face trials as the demo story: the author plus two consenting volunteers (planned Oct 6),
-  one product per person. Day 0 Oct 7 (moved from Oct 3); length is
-  the claim's deadline, at most 21 days (ends by Oct 28).
+- Real split-face trials as the demo story: the author plus two consenting teammates (Sahni,
+  Suvaani), one product per person. Day 0 Oct 7; 21 days, checkpoints day 7, 14 and 21
+  (Oct 14, 21, 28).
 - Web app: claim, capture, timeline, verdict and receipt screens.
 
 **Out**
@@ -108,10 +108,10 @@ G2 and G4 are the core. Without them this is just another skin tracker.
 
 | By | Criterion |
 |---|---|
-| Oct 5 | Noise floor measured; go/no-go decided |
-| Oct 24 | Consistent daily split-face check-ins through the claim's deadline |
-| Nov 1 | A stranger can open the test link, run a claim end to end, and read a verdict |
-| Nov 1 | Demo video tells claim → split-face trial → verdict in under 3 minutes |
+| Oct 7 ✓ | Noise floor measured; go/no-go decided |
+| Oct 26 | A stranger can open the test link, run a claim end to end, and read a verdict |
+| Oct 26 | Demo video tells claim → split-face trial → verdict in under 3 minutes; submitted |
+| Oct 28 | Consistent daily split-face check-ins through day 21; final verdict added by Oct 29 |
 
 ## 9. Constraints
 
@@ -126,13 +126,14 @@ G2 and G4 are the core. Without them this is just another skin tracker.
   Women in Tech $1,000, Rising Star $1,000.
 
 **Budget**
-- 1,000 free API units (90 days), plus up to 1,000 for sharing on social media.
-- Units are charged only on a successful analysis. Units per analysis: confirm on the first call.
-- Expected use: ~10 (noise test) + ~29 (daily trial, more if 3 photos per check-in) + testing. Well inside the budget if an
-  analysis costs 1–2 units.
+- 1,000 free API units per person (90 days), plus up to 1,000 for sharing on social media.
+- Units are charged only on a successful analysis: 14 units per analysis, 2 per split-face photo.
+- Expected use per person: ~168 (day 0 + 5 repeats) + ~252 (3 checkpoints × 3 photos) = ~420.
+  Daily photos are analysed only if units are left at the end.
 
 **Time**
-- Ringproof (Nebius, Oct 30) comes first. Light work until Oct 29, full build Oct 30 – Nov 1.
+- Finish and submit by **Oct 26** (one week early, decided Oct 8), alongside Ringproof (Nebius,
+  Oct 30). Only the day-21 verdict is added after, by Oct 29.
 
 ## 10. Risks
 

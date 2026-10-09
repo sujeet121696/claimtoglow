@@ -12,7 +12,8 @@ export function CapturePage() {
   return (
     <>
       <TrialHeader page="capture" title="Capture" person={person} kind={kind} />
-      <Camera key={setName} setName={setName} side={person.treated_side} title={`${personLabel(person.person)} · ${KINDS[kind].label}`} onSaved={refresh} />
+      <Camera key={setName} setName={setName} side={person.treated_side} title={`${personLabel(person.person)} · ${KINDS[kind].label}`}
+        stepOut={kind === "noise" || person.today_target > 1} done={kind === "trial" && person.today_done} onSaved={refresh} />
     </>
   );
 }

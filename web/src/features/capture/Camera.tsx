@@ -27,9 +27,11 @@ const CHIP: Record<string, string> = {
   expression: "Neutral", light: "Light", even: "Even light", resolution: "Sharp", camera: "Camera", match: "Day 0",
 };
 
-type Props = { setName: string; side: Side; title?: string; onSaved: () => void };
+// stepOut: start with "Step out between shots" on (repeat photos and checkpoint days).
+// done: today's check-in photos are all saved, so auto-capture stops.
+type Props = { setName: string; side: Side; title?: string; stepOut?: boolean; done?: boolean; onSaved: () => void };
 
-export function Camera({ setName, side, title, onSaved }: Props) {
+export function Camera({ setName, side, title, stepOut = false, done = false, onSaved }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const viewRef = useRef<HTMLCanvasElement>(null);
   const sampleCanvas = useRef(document.createElement("canvas"));
@@ -40,7 +42,7 @@ export function Camera({ setName, side, title, onSaved }: Props) {
   const [reference, reloadReference] = useReference(setName);
   // Hands-free by default on phones (touch screens), where the phone sits on a stand.
   const [auto, setAuto] = useState(() => window.matchMedia("(pointer: coarse)").matches);
-  const [fresh, setFresh] = useState(setName.startsWith("noise"));
+  const [fresh, setFresh] = useState(stepOut);
   const [ghost, setGhost] = useState(true);
   const [steady, setSteady] = useState(false);
   const [status, setStatus] = useState("");
@@ -54,8 +56,8 @@ export function Camera({ setName, side, title, onSaved }: Props) {
     lastDetect: 0, passSince: 0, failSince: 0, noFaceSince: 0, awaitingLeave: false, capturing: false,
     lastBeep: -1, mirror: true, deviceLabel: "",
   });
-  const opts = useRef({ auto, fresh, ghost, reference, side, setName, onSaved });
-  opts.current = { auto, fresh, ghost, reference, side, setName, onSaved };
+  const opts = useRef({ auto, fresh, ghost, reference, side, setName, done, onSaved });
+  opts.current = { auto, fresh, ghost, reference, side, setName, done, onSaved };
 
   function stop() {
     const v = videoRef.current;
@@ -72,7 +74,13 @@ export function Camera({ setName, side, title, onSaved }: Props) {
     return (sameAsDay0 ?? last)?.deviceId;
   }
 
+  // Each start gets a number; a start overtaken by a newer one (auto-start plus a tap, or a camera
+  // switch) steps aside instead of reporting "play() was interrupted" as a failure.
+  const startSeq = useRef(0);
+
   async function start(id?: string) {
+    const seq = ++startSeq.current;
+    const stale = () => seq !== startSeq.current;
     stop();
     setError("");
     try {
@@ -85,9 +93,11 @@ export function Camera({ setName, side, title, onSaved }: Props) {
           height: { ideal: 1080 },
         },
       });
+      if (stale()) { stream.getTracks().forEach((t) => t.stop()); return; }
       const v = videoRef.current!;
       v.srcObject = stream;
       await v.play();
+      if (stale()) return;
       const track = stream.getVideoTracks()[0];
       const settings = track.getSettings();
       live.current.mirror = settings.facingMode !== "environment"; // selfie preview mirrors; saved photos never do
@@ -98,7 +108,9 @@ export function Camera({ setName, side, title, onSaved }: Props) {
       await getLandmarker("VIDEO");
       setRunning(true);
     } catch (e) {
-      setError(`Camera failed: ${(e as Error).message}. On a phone, open the https:// address (npm run dev:phone).`);
+      if (stale()) return;
+      const blocked = (e as Error).name === "NotAllowedError" || !window.isSecureContext;
+      setError(`Camera failed: ${(e as Error).message}.${blocked ? " Allow camera access, and on a phone open the https:// address." : " Tap Start camera again."}`);
     }
   }
 
@@ -195,7 +207,7 @@ export function Camera({ setName, side, title, onSaved }: Props) {
     L.passSince ||= now;
     const held = now - L.passSince;
     setSteady(held >= 500);
-    if (!opts.current.auto) return;
+    if (!opts.current.auto || opts.current.done) return;
     const left = Math.ceil((HOLD_MS - held) / 1000);
     if (left <= 0) {
       void capture();
@@ -252,7 +264,7 @@ export function Camera({ setName, side, title, onSaved }: Props) {
     ctx.fillText(treatedOnLeft ? "T" : "C", 17, 32);
     ctx.fillText(treatedOnLeft ? "C" : "T", dw - 33, 32);
 
-    if (L.passSince && o.auto && !L.capturing) {
+    if (L.passSince && o.auto && !o.done && !L.capturing) {
       const left = Math.max(1, Math.ceil((HOLD_MS - (performance.now() - L.passSince)) / 1000));
       ctx.font = "bold 96px system-ui, sans-serif";
       ctx.textAlign = "center";
@@ -311,6 +323,8 @@ export function Camera({ setName, side, title, onSaved }: Props) {
   const failing = checks.find((c) => !c.pass && !c.optional);
   const hint = justSaved
     ? { text: justSaved, tone: "good" }
+    : done
+      ? { text: "Today's photos are all saved ✓", tone: "good" }
     : leaving
       ? { text: checks[0]?.id === "face" ? "Now come back into the frame" : "Step out of the frame", tone: "info" }
       : !checks.length ? { text: "Looking for your face…", tone: "info" }
