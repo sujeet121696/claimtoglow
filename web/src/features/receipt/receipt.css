@@ -1,0 +1,20 @@
+/* Receipt: facts, fingerprints and the badge. Prints as a plain document. */
+.receipt { display: grid; gap: var(--space-4); }
+.facts { display: grid; gap: var(--space-2); margin: 0; }
+.facts div { display: grid; grid-template-columns: 160px 1fr; gap: var(--space-3); }
+.facts dt { color: var(--muted); font-weight: 600; font-size: 13px; }
+.facts dd { margin: 0; }
+.hash { overflow-wrap: anywhere; margin: 0 0 var(--space-2); }
+.photo-hashes td.mono { white-space: normal; overflow-wrap: anywhere; min-width: 280px; text-align: left; font-size: 12px; }
+.repeat-photos { margin-top: var(--space-3); }
+.repeat-photos summary { cursor: pointer; color: var(--muted); }
+.snippet { display: block; width: 100%; margin: var(--space-3) 0 var(--space-2); font-size: 12px; }
+
+@media (max-width: 640px) {
+  .facts div { grid-template-columns: 1fr; gap: 0; }
+}
+
+@media print {
+  .topbar, .page-actions, .no-print { display: none; }
+  .card { box-shadow: none; break-inside: avoid; }
+}

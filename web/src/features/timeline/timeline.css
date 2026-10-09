@@ -1,0 +1,20 @@
+/* Timeline: trend charts and the check-in table. */
+.timeline-meta, .timeline-note { margin: var(--space-2) 0 0; }
+
+.trend-wrap { width: 100%; }
+.trend { display: block; max-width: 100%; height: auto; }
+.trend .band { fill: var(--note-bg); }
+.trend .zero { stroke: var(--border-strong); }
+.trend .checkpoint-line { stroke: var(--border); stroke-dasharray: 3 3; }
+.trend .tick { fill: var(--muted); font-size: 11px; }
+.trend .dot { fill: var(--muted); }
+.trend .dot.checkpoint { fill: var(--accent); }
+.trend .result line { stroke-width: 2; }
+.trend .result.better rect, .trend .result.better line { fill: var(--pass); stroke: var(--pass); }
+.trend .result.worse rect, .trend .result.worse line { fill: var(--fail); stroke: var(--fail); }
+.trend .result.steady rect, .trend .result.steady line { fill: var(--muted); stroke: var(--muted); }
+
+.checkins th[scope="row"] { display: flex; align-items: center; gap: var(--space-2); }
+.checkins img { width: 28px; height: 36px; object-fit: cover; border-radius: 4px; }
+.checkins tr.is-checkpoint { background: var(--note-bg); }
+.checkins tr.is-checkpoint th[scope="row"] { background: var(--note-bg); }

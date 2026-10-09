@@ -12,7 +12,7 @@
 | M1 | Trial started, noise floor measured, go/no-go decided | Oct 7 ✓ |
 | M2 | Analyzer, verdict engine and capture gate working in code | Oct 7 ✓ |
 | M3 | 3-photo checkpoints built (Oct 8 ✓); day-7 checkpoint analysed | Oct 14 |
-| M4 | Receipt, timeline and judge demo link done; day-14 checkpoint analysed | Oct 21 |
+| M4 | Receipt, timeline and judge demo link done (Oct 8–9 ✓); day-14 checkpoint analysed | Oct 21 |
 | M5 | Demo video on YouTube, Devpost text, repo public, **submitted** | **Oct 26** |
 | M6 | Day-21 checkpoint analysed, final verdict added to the submission | Oct 29 |
 
@@ -21,9 +21,9 @@
 | Dates | Work |
 |---|---|
 | Every day | Daily photo for all three (same camera, spot, light and time) |
-| Oct 8 – 13 (weekend Oct 10–11) | ~~15b 3-photo checkpoints~~ ✓, ~~Sahni's extra repeat photo~~ ✓, social share (3), tune gate thresholds (16) |
+| Oct 8 – 13 (weekend Oct 10–11) | ~~15b 3-photo checkpoints~~ ✓, ~~Sahni's extra repeat photo~~ ✓, ~~tune gate thresholds (16)~~ ✓, social share (3) |
 | **Oct 14 (day 7)** | Checkpoint: 3 fresh photos each, split-analysed |
-| Oct 15 – 20 (weekend Oct 17–18) | Timeline (21), receipt + badge (22), judge demo link (23) |
+| Oct 15 – 20 (weekend Oct 17–18) | ~~Timeline (21)~~ ✓, ~~receipt + badge (22)~~ ✓, ~~judge demo (23)~~ ✓ (Oct 8–9) |
 | **Oct 21 (day 14)** | Checkpoint: 3 fresh photos each, split-analysed; verdict for the demo |
 | Oct 22 – 26 (weekend Oct 24–25) | Demo video (24), Devpost text (25), repo public (26), rules check and **submit (27)** |
 | **Oct 28 (day 21)** | Final checkpoint, final verdict; update receipt, video note and Devpost text before Nov 2 |
@@ -38,7 +38,11 @@
 **Setup**
 1. [x] Register on Devpost (submissions open Sep 29)
 2. [x] Create a YouCam API account via the India link: https://yce.makeupar.com/ai-api. 1,000 free units redeemed Oct 6, valid until Jan 4, 2027
-3. [ ] Share the hackathon on social media for bonus units (500 per platform, up to +1,000)
+3. [ ] Share the hackathon on social media for bonus units (500 per platform, up to +1,000 per team).
+       Rules (form https://forms.gle/BJd5gPzF6YqPQR4R8): LinkedIn, YouTube, Facebook, IG or Threads;
+       tag @YouCam API, name the YouCam APIs used, include "Received API credits for sharing", public
+       for 30+ days, account created before Sep 24, 2026; one reward per platform per team; form by Nov 2.
+       Plan: LinkedIn text post now (+500), the YouTube demo video (task 24) later (+500)
 3a. [ ] Ask the organisers for extra test units (Devpost discussion or contact_event@PerfectCorp.com)
 3b. [x] Teammates (Sahni, Suvaani) register on Devpost, join the team, and redeem their own YouCam codes.
         Codes are per registrant and non-transferable; each key analyses only its owner's trial.
@@ -87,7 +91,7 @@
 **Noise test**
 7. [x] In the same setup and sitting, take repeat photos into `noise-<person>` (≥5 each). Done:
        Sujeet 5, Sahni 5, Suvaani 5 (all passed the gate). Step out of frame and back between shots ("Fresh shots" in the lab enforces it)
-8. [x] API tested Oct 6 on 2 faces (photos now in `photos/_retired/api-test/`): works, raw scores 0–100, higher looks better, `ui_score` differs a lot from raw. Face <60% width is rejected. Units per analysis: _pending (balance was 1,026)_
+8. [x] API tested Oct 6 on 2 faces (photos now in `photos/_retired/api-test/`): works, raw scores 0–100, higher looks better, `ui_score` differs a lot from raw. Face <60% width is rejected. Units per analysis: 14 (task 4)
 8a. [x] `python scripts/noise_test.py photos/noise-sujeet --split --limit 2`: does YouCam accept the
        mirrored half-faces? If yes, run the full `--split` set and record the `L-R` floor too
 9. [x] Run the full noise test and record the noise floor per concern below. Done for all three
@@ -116,7 +120,6 @@ every day; each checkpoint (day 7, 14, 21) is 3 fresh photos averaged; day 0 = t
 day-00. Daily single photos are still taken and kept.
 
 ## Oct 6 – 20 · Core, checkpoints, receipt → M2, M3, M4
-11. [ ] Keep daily photos going
 12. [x] Choose backend and web stack, and record them in `ARCHITECTURE.md` (Oct 6: FastAPI + React/Vite, as Ringproof)
 13. [x] Analyzer module with local result cache (`app/analyzer.py`, shared with the noise script)
 14. [x] Direction of `raw_score`: higher is better for every concern (YouCam docs, Oct 7). Shown as ↑
@@ -130,7 +133,7 @@ day-00. Daily single photos are still taken and kept.
 15c. [x] Direction confirmed (task 14): the verdict's higher-is-better default is correct
 15a. [x] `trial.json` per trial: product, claim, treated side, start date (VISION D3). Lab is now organised by person: Today screen, person picker, day numbers from day 0, Retake
 16. [ ] Capture gate: brightness + face framing/pose (MediaPipe), day-0 ghost overlay
-    - [x] Built in the lab app (`web/src/gate.ts`): Capture, Upload and Results screens. Checked on
+    - [x] Built in the lab app (`web/src/lib/gate.ts`): Capture, Upload and Results screens. Checked on
           the 2 test photos via Upload; flags uneven light and off-centre nose correctly
     - [x] Test the live camera on the laptop and on the phone (`npm run dev:phone`)
     - [x] Oct 7 fixes: same-camera and light-direction checks vs day 0, phone full-screen capture,
@@ -142,8 +145,17 @@ day-00. Daily single photos are still taken and kept.
           (4 repeat photos had landed there by mistake); photos are Daily check-in or Repeat photos only
     - [x] Oct 8: View (full size) and Download on each photo in Results (the background-free copy);
           camera no longer fails with "play() was interrupted" when it is started twice; "Install app"
-          in the top bar (Chrome prompt; iPhone: Share → Add to Home Screen)
-    - [ ] Tune thresholds from the day-0 session. **Due Oct 13**
+          in the top bar (Chrome prompt; iPhone: Share → Add to Home Screen); Today shows the latest
+          check-in beside day 0, each with its passed/failed badge; the analyse confirm names whose key pays ("Sahni's key", "the main key");
+          "Same distance as day 0" (±8% face width) is now a required check; the verdict counts only
+          checkpoint days (an analysed day 1 no longer shows Better/Worse); `.gitignore` anchors
+          `/photos/` and `/results/` (the Results page source had been ignored), build caches removed
+    - [x] Thresholds checked Oct 8 on all 21 saved photos (3 day-00, 3 day-01, 15 repeats): every
+          required check passes and no limit needed changing. Closest margins: roll 3.9° (limit 4°),
+          light balance 9.7% (limit 10%, Suvaani's day-00). Within one sitting face width varied up
+          to 0.05 and chin angle up to 0.05, so the required distance check (±0.08) holds and the
+          optional chin match (±0.04) only advises. Sahni's day-01 (77% vs 58%) is the kind of
+          drift the distance check now blocks
 16a. [x] Open the lab from anywhere (README "Open it from anywhere"). Oct 7: live at
        claimtoglow.kharidwise.com through a Cloudflare Tunnel, Access policy with the team emails,
        then the lab token; `PUBLIC_URL` in `.env`
@@ -153,14 +165,22 @@ day-00. Daily single photos are still taken and kept.
         "Suggest from claim" in Person → Edit). Tested live on Groq, Gemini and NVIDIA. Real claims:
         face wash (full product page) → radiance, texture, moisture (all 3 models agree; set for Sujeet and
         Sahni); Demelan+ → age_spot, radiance (Suvaani's trial stays on dark circles, off-label)
-21. [ ] Web app: timeline screen (claim, capture and verdict exist). **Due Oct 20**
-22. [ ] Receipt page with photo hashes, plus the badge snippet. **Due Oct 20**
-23. [ ] Public demo link for judges (a read-only demo, not the live lab with real faces). **Due Oct 20**
+21. [x] Timeline screen (Oct 8): per claimed concern, a chart of treated − control since baseline
+        with the single-photo noise band and the checkpoint the verdict used; table of every
+        check-in with capture check and SHA-256 (`app/receipt.py`, Timeline page)
+22. [x] Receipt page with photo hashes, plus the badge snippet (Oct 8): face-free record,
+        `receipt_hash` over canonical JSON, SVG badge, print layout; tests in `tests/test_receipt.py`
+23. [x] Public demo link for judges (Oct 9): https://claimtoglow.kharidwise.com/demo/, read-only,
+        no photos. `npm run build:demo` once; the API serves live, face-free data (`app/demo.py`).
+        Cloudflare Access bypasses only the path `demo`; the lab still needs the team login.
+        Checked Oct 9 from outside: /demo 200, lab and /api redirect to the login. Added to
+        Devpost "Try it out". The PC, API and tunnel must stay on through judging (Nov 3–20)
 
 ## Oct 21 – 29 · Submit early → M5, M6
 19. [ ] Analyse the day-14 checkpoint (Oct 21), then the final day-21 checkpoint (Oct 28)
 24. [ ] Demo video (1–3 min): claim on the box → split-face trial → verdict, uploaded to YouTube. **Due Oct 25**
 25. [ ] Devpost text: problem, differentiation, how YouCam is used, why `raw_score` + noise floor. **Due Oct 25**
+        Oct 8: draft in `docs/DEVPOST.md`; project created on Devpost (draft, overview saved)
 26. [ ] Make the repo public (or share it with contact_event@PerfectCorp.com). **Due Oct 26**
 27. [ ] Final check against the rules, then submit. **Due Oct 26**
 28. [ ] Day-21 final verdict into the receipt and the Devpost text. **Due Oct 29**

@@ -2,7 +2,13 @@ import { href } from "../../app/router";
 import { useStore } from "../../app/store";
 import type { Person } from "../../api/types";
 import { Badge } from "../../components/ui";
-import { CHANGE, concernLabel, dayStem, personLabel, sideShort, type Kind } from "../../domain/trial";
+import { CHANGE, concernLabel, dayStem, personLabel, sideShort, statusTone, type Kind } from "../../domain/trial";
+import { DayRing, nextCheckpoint } from "./DayRing";
+
+const GateBadge = ({ passed }: { passed: boolean | null | undefined }) =>
+  passed == null ? <Badge tone="neutral">checking</Badge>
+    : passed ? <Badge tone="pass">passed</Badge>
+    : <Badge tone="fail">failed</Badge>;
 
 function dayText(p: Person) {
   if (p.day === null) return "No day 0 set";
@@ -13,9 +19,9 @@ function dayText(p: Person) {
 
 export function PersonCard({ person: p }: { person: Person }) {
   const { selectPerson, edit } = useStore();
-  const progress = p.day === null ? 0 : Math.min(1, Math.max(0, p.day / p.duration_days));
   const noiseDone = p.noise_count >= p.noise_target;
   const checkpoint = p.today_target > 1; // day 7, 14, 21: three fresh photos, averaged
+  const upcoming = nextCheckpoint(p.day, p.duration_days);
   // Same time of day as day 0 means the same light.
   const day0Time = p.day0?.saved_at
     ? new Date(p.day0.saved_at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
@@ -34,31 +40,29 @@ export function PersonCard({ person: p }: { person: Person }) {
   return (
     <article className="card person-card">
       <header className="person-head">
+        <DayRing day={p.day} duration={p.duration_days} />
         <div>
           <h2>{personLabel(p.person)}</h2>
           <p className="muted small">{p.product || "No product set"}</p>
+          <p className="small muted">{dayText(p)} · treated {sideShort(p.treated_side)}</p>
         </div>
         <button className="ghost" onClick={() => edit(p)}>Edit</button>
       </header>
-
-      <div>
-        <div className="progress" role="progressbar" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100}>
-          <span style={{ width: `${progress * 100}%` }} />
-        </div>
-        <p className="small muted">{dayText(p)} · treated {sideShort(p.treated_side)}</p>
-      </div>
+      {upcoming && <p className="next-checkpoint small">{upcoming}</p>}
 
       <ul className="tasks">
-        <li>
-          <span className={p.today_done ? "pass" : "todo"} aria-hidden>{p.today_done ? "✓" : "○"}</span>
-          <span>
-            {checkpoint ? `Checkpoint · ${p.today_count}/${p.today_target} photos` : "Today's photo"}
-            {p.day !== null && p.day >= 0 ? ` · ${p.today_next ?? dayStem(p.day)}` : ""}
-            {day0Time && !p.today_done && <span className="muted small"> · around {day0Time}</span>}
-            {checkpoint && !p.today_done && <span className="muted small"> · step out of frame between shots</span>}
-          </span>
-          {!p.today_done && <Actions kind="trial" />}
-        </li>
+        {p.today_target > 0 && (
+          <li>
+            <span className={p.today_done ? "pass" : "todo"} aria-hidden>{p.today_done ? "✓" : "○"}</span>
+            <span>
+              {checkpoint ? `Checkpoint · ${p.today_count}/${p.today_target} photos` : "Today's photo"}
+              {p.day !== null && p.day >= 0 ? ` · ${p.today_next ?? dayStem(p.day)}` : ""}
+              {day0Time && !p.today_done && <span className="muted small"> · around {day0Time}</span>}
+              {checkpoint && !p.today_done && <span className="muted small"> · step out of frame between shots</span>}
+            </span>
+            {!p.today_done && <Actions kind="trial" />}
+          </li>
+        )}
         <li>
           <span className={noiseDone ? "pass" : "todo"} aria-hidden>{noiseDone ? "✓" : "○"}</span>
           <span>Repeat photos · {p.noise_count}/{p.noise_target}</span>
@@ -68,7 +72,7 @@ export function PersonCard({ person: p }: { person: Person }) {
 
       <div className="verdict small">
         <b>Verdict</b>
-        <Badge tone={p.verdict.status === "met" ? "pass" : p.verdict.status === "not met" ? "fail" : "neutral"}>{p.verdict.status}</Badge>
+        <Badge tone={statusTone(p.verdict.status)}>{p.verdict.status}</Badge>
         <span className="muted">{p.verdict.reason}</span>
       </div>
       {p.verdict.concerns.length > 0 && (
@@ -89,14 +93,12 @@ export function PersonCard({ person: p }: { person: Person }) {
       )}
 
       {p.day0 ? (
-        <div className="day0">
+        <div className={`day0 ${p.latest ? "with-latest" : ""}`}>
           <img src={p.day0.masked_url ?? p.day0.url} alt={`${personLabel(p.person)}, day 0`} />
           <div className="small">
             <div className="day0-title">
               <b>Day 0</b>
-              {p.day0.gate_passed === null ? <Badge tone="neutral">checking</Badge>
-                : p.day0.gate_passed ? <Badge tone="pass">passed</Badge>
-                : <Badge tone="fail">failed</Badge>}
+              <GateBadge passed={p.day0.gate_passed} />
             </div>
             {p.day0.gate_passed === false && (
               <p className="muted">
@@ -104,6 +106,23 @@ export function PersonCard({ person: p }: { person: Person }) {
               </p>
             )}
           </div>
+          {p.latest && (
+            <>
+              <img src={p.latest.masked_url ?? p.latest.url} alt={`${personLabel(p.person)}, ${p.latest.stem}`} />
+              <div className="small">
+                <div className="day0-title">
+                  <b>Latest</b>
+                  <GateBadge passed={p.latest.gate_passed} />
+                </div>
+                <p className="muted">
+                  {p.latest.stem}
+                  {p.latest.gate_passed === false && (
+                    <> · {p.latest.failed.join(", ")}. <a href={href("results", { set: `trial-${p.person}` })} onClick={() => selectPerson(p.person)}>Retake</a></>
+                  )}
+                </p>
+              </div>
+            </>
+          )}
         </div>
       ) : (
         <p className="muted small">No day-0 photo yet. Take it before the first use.</p>

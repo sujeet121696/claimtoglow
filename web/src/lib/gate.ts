@@ -17,9 +17,9 @@ export const LIMITS = {
   clipped: 0.03, // share of blown-out face pixels
   balance: 0.1, // |left − right| / mean brightness of the two face halves
   minShortSide: 480, // YouCam SD minimum
-  // vs day 0. lightSide: which half is brighter, signed. On Oct 7 a 50-minute shift in window light
-  // moved treated − control scores by 2–4× the noise, so the light's direction must match too.
-  match: { faceWidth: 0.04, noseX: 0.03, pitch: 0.04, luma: 0.15, lightSide: 0.04 },
+  // Optional match to day 0 (why: ARCHITECTURE.md, capture gate). lightSide: which half is brighter, signed.
+  match: { noseX: 0.03, pitch: 0.04, luma: 0.15, lightSide: 0.04 },
+  distance: 0.08, // required: |face width − day 0's|, as a fraction of image width
 };
 
 export type Crop = { x: number; y: number; w: number; h: number };
@@ -212,8 +212,13 @@ export function evaluate(m: Metrics, ref?: Reference | null): Check[] {
   ];
   if (ref) {
     const M = L.match;
+    const off = m.faceWidth - ref.faceWidth;
+    checks.push({
+      id: "distance", label: "Same distance as day 0", value: `${pct(m.faceWidth)} (day 0: ${pct(ref.faceWidth)})`,
+      pass: Math.abs(off) <= L.distance,
+      hint: off < 0 ? "Move closer, to day 0's distance (match the ghost)" : "Move back, to day 0's distance (match the ghost)",
+    });
     const misses = [
-      Math.abs(m.faceWidth - ref.faceWidth) > M.faceWidth && (m.faceWidth < ref.faceWidth ? "closer" : "further back"),
       Math.abs(m.noseX - ref.noseX) > M.noseX && "nose position",
       Math.abs(m.pitch - ref.pitch) > M.pitch && "chin angle",
       Math.abs(m.luma - ref.luma) / ref.luma > M.luma && (m.luma < ref.luma ? "more light" : "less light"),
@@ -226,11 +231,9 @@ export function evaluate(m: Metrics, ref?: Reference | null): Check[] {
         pass: same, hint: "Use the same camera, phone and mode as day 0",
       });
     }
-    // Optional since Oct 7: Sahni's matched repeat photos still differed from day 0 on texture by
-    // 3 SD, so matching didn't remove that noise; checkpoints average 3 photos instead.
     checks.push({
       id: "match", label: "Matches day 0 (optional)", value: misses.length ? `off: ${misses.join(", ")}` : "yes",
-      pass: misses.length === 0, hint: "Optional: same distance, position, time of day and light as day 0", optional: true,
+      pass: misses.length === 0, hint: "Optional: same position, time of day and light as day 0", optional: true,
     });
   }
   return checks;

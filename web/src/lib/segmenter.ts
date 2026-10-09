@@ -14,7 +14,7 @@ async function create(delegate: "GPU" | "CPU") {
   });
 }
 
-// CPU: the model is small, and on a phone the GPU path returned an empty mask (Oct 7).
+// CPU: the model is small, and on a phone the GPU path returned an empty mask.
 function getSegmenter(): Promise<ImageSegmenter> {
   return (cached ??= create("CPU"));
 }

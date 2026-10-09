@@ -1,6 +1,6 @@
 // Small building blocks every page uses, so all screens share one structure:
 // PageHeader (title, one-line description, actions) followed by Cards.
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 export function PageHeader({ title, description, actions }: { title: string; description?: ReactNode; actions?: ReactNode }) {
   return (
@@ -68,4 +68,28 @@ export function Badge({ tone, children }: { tone: "pass" | "fail" | "neutral"; c
 
 export function Empty({ children }: { children: ReactNode }) {
   return <p className="empty muted">{children}</p>;
+}
+
+/** Long text folded to two lines, with "more" / "less" (e.g. a full product claim). */
+export function Clamp({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [cut, setCut] = useState(false); // only offer "more" when the text really is cut off
+  const ref = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setCut(el.scrollHeight > el.clientHeight + 1);
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <span className="clamp">
+      <span ref={ref} className={open ? "clamp-text open" : "clamp-text"}>{children}</span>
+      {(cut || open) && (
+        <button className="link-button small" onClick={() => setOpen((o) => !o)} aria-expanded={open}>{open ? "less" : "more"}</button>
+      )}
+    </span>
+  );
 }

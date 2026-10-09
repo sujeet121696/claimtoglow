@@ -5,7 +5,7 @@ import { dayStem, KINDS, type Kind } from "../../domain/trial";
 /** What the next photo is: today's check-in or a repeat photo for the noise floor. */
 export function KindPicker({ person, value, onChange }: { person: Person; value: Kind; onChange: (k: Kind) => void }) {
   const count: Record<Kind, string> = {
-    trial: person.day === null ? "" : person.today_done ? "done"
+    trial: person.day === null ? "" : person.today_target === 0 ? "ended" : person.today_done ? "done"
       : person.today_target > 1 ? `${person.today_count}/${person.today_target}` : person.today_next ?? dayStem(person.day),
     noise: `${person.noise_count}/${person.noise_target}`,
   };

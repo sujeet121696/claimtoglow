@@ -1,3 +1,4 @@
+import { DEMO } from "../../app/mode";
 import { useStore } from "../../app/store";
 import { personLabel } from "../../domain/trial";
 
@@ -14,9 +15,9 @@ export function PersonPicker() {
         onChange={(e) => (e.target.value === NEW ? edit("new") : selectPerson(e.target.value))}
       >
         {people.map((p) => <option key={p.person} value={p.person}>{personLabel(p.person)}</option>)}
-        <option value={NEW}>＋ Add person…</option>
+        {!DEMO && <option value={NEW}>＋ Add person…</option>}
       </select>
-      {person && <button className="ghost" onClick={() => edit(person)}>Edit</button>}
+      {person && !DEMO && <button className="ghost" onClick={() => edit(person)}>Edit</button>}
     </div>
   );
 }

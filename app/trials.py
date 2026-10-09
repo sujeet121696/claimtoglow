@@ -68,6 +68,8 @@ def day_stems(trial: dict, day: int) -> list:
 
 def today_photos(trial: dict, day, taken: set) -> dict:
     """Today's photos: how many are taken, how many are needed, and the next name (None when done)."""
+    if day is not None and day > trial["duration_days"]:  # trial finished: no more photos
+        return {"count": 0, "target": 0, "next": None}
     if day is None or day < 0:
         return {"count": 0, "target": 1, "next": None}
     stems = day_stems(trial, day)
@@ -75,21 +77,35 @@ def today_photos(trial: dict, day, taken: set) -> dict:
     return {"count": len(stems) - len(missing), "target": len(stems), "next": missing[0] if missing else None}
 
 
-def summary(person: str, read_meta) -> dict:
+def read_meta(photo):
+    """The photo's capture record (<stem>.meta.json): gate result, SHA-256, time saved."""
+    meta = photo.with_suffix(".meta.json")
+    return json.loads(meta.read_text(encoding="utf-8")) if meta.exists() else None
+
+
+def failed_checks(gate) -> list:
+    """Labels of the required capture checks a photo failed (optional ones don't count)."""
+    return [c["label"] for c in gate.get("checks", []) if not c["pass"] and not c.get("optional")] if gate else []
+
+
+def summary(person: str) -> dict:
     """Everything the Today screen needs for one person."""
     trial = read_trial(person)
     daily = photo_files(PHOTOS / f"trial-{person}")
     day0 = next((p for p in daily if p.stem == "day-00"), None)
+    later = [p for p in daily if (m := DAY_STEM.match(p.stem)) and int(m.group(1)) > 0]
+    latest = later[-1] if later else None
     day = day_of(trial)
     day0_meta = (read_meta(day0) or {}) if day0 else {}
     gate = day0_meta.get("gate")
+    latest_gate = ((read_meta(latest) or {}).get("gate") if latest else None)
     today = today_photos(trial, day, {p.stem for p in daily})
     return {
         **trial,
         "key_var": key_var_for(f"trial-{person}"),
         "day": day,
         "checkins": [p.stem for p in daily],
-        "today_done": day is not None and day >= 0 and today["next"] is None,
+        "today_done": day is not None and 0 <= day <= trial["duration_days"] and today["next"] is None,
         "today_count": today["count"],
         "today_target": today["target"],
         "today_next": today["next"],
@@ -101,8 +117,17 @@ def summary(person: str, read_meta) -> dict:
             "masked_url": f"/files/photos/trial-{person}/{MASK_DIR}/day-00.jpg" if mask_files(f"trial-{person}", "day-00")[1].exists() else None,
             "saved_at": day0_meta.get("saved_at"),  # same time of day = same light
             "gate_passed": gate.get("passed") if gate else None,
-            "failed": [c["label"] for c in gate.get("checks", []) if not c["pass"] and not c.get("optional")] if gate else [],
+            "failed": failed_checks(gate),
         } if day0 else None,
+        # Newest check-in after day 0, shown beside day 0 (names sort in day order: day-07 < day-07b < day-08).
+        "latest": {
+            "stem": latest.stem,
+            "url": f"/files/photos/trial-{person}/{latest.name}",
+            "masked_url": (f"/files/photos/trial-{person}/{MASK_DIR}/{latest.stem}.jpg"
+                           if mask_files(f"trial-{person}", latest.stem)[1].exists() else None),
+            "gate_passed": latest_gate.get("passed") if latest_gate else None,
+            "failed": failed_checks(latest_gate),
+        } if latest else None,
     }
 
 
@@ -152,15 +177,15 @@ def treated_minus_control(set_name: str, treated_side: str) -> dict:
 
 
 def trial_verdict(person: str) -> dict:
-    """Baseline = day-00 + the repeat photos; checkpoint = every analysed photo of the latest day
-    after day 0 (three on a checkpoint day: day-07, day-07b, day-07c)."""
+    """Baseline = day-00 + the repeat photos; checkpoint = the analysed photos of the latest
+    checkpoint day (day-07, day-07b, day-07c). Other analysed days are ignored."""
     trial = read_trial(person)
     daily = treated_minus_control(f"trial-{person}", trial["treated_side"])
     repeats = treated_minus_control(f"noise-{person}", trial["treated_side"])
     by_day = {}
     for stem, series in daily.items():
         m = DAY_STEM.match(stem)
-        if m and int(m.group(1)) > 0:
+        if m and is_checkpoint(trial, int(m.group(1))):
             by_day.setdefault(int(m.group(1)), []).append(series)
     day = max(by_day) if by_day else None
     baseline = ([daily["day-00"]] if "day-00" in daily else []) + list(repeats.values())

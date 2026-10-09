@@ -340,6 +340,8 @@ export function Camera({ setName, side, title, stepOut = false, done = false, on
           <div className="stage-empty">
             <button className="primary" onClick={() => start()}>Start camera</button>
             <p className="small">Use the same camera, spot and light every day.</p>
+            {/* YouCam's shooting guide for skin analysis: forehead fully visible, glasses off. */}
+            <p className="small">Hair back so the forehead shows, glasses off.</p>
             {error && <p className="error">{error}</p>}
           </div>
         )}

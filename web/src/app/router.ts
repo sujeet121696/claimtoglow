@@ -1,20 +1,27 @@
 // Tiny hash router: #/page?key=value. Links are shareable and the back button works, without a
 // routing library. Add a page by adding it to PAGES.
 import { useCallback, useEffect, useState } from "react";
+import { DEMO } from "./mode";
 
 export const PAGES = {
   today: "Today",
   capture: "Capture",
   upload: "Upload",
   results: "Results",
+  timeline: "Timeline",
+  receipt: "Receipt",
 } as const;
 
 export type Page = keyof typeof PAGES;
+
+/** Pages in the top bar. The demo is read-only, so it shows only the trial's story. */
+export const NAV: Page[] = DEMO ? ["timeline", "receipt"] : (Object.keys(PAGES) as Page[]);
+export const HOME: Page = NAV[0];
 export type Route = { page: Page; params: URLSearchParams };
 
 function parse(): Route {
   const [path, query = ""] = window.location.hash.replace(/^#\/?/, "").split("?");
-  const page = (path in PAGES ? path : "today") as Page;
+  const page = NAV.includes(path as Page) ? (path as Page) : HOME;
   return { page, params: new URLSearchParams(query) };
 }
 

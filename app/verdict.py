@@ -56,7 +56,7 @@ def verdict(concerns: list, baseline: list, checkpoint: list, noise: list, final
         if not baseline or any(r["noise_n"] < MIN_NOISE_PHOTOS for r in rows):
             reason = f"Analyse day 0 and at least {MIN_NOISE_PHOTOS} repeat photos (split) first."
         elif not checkpoint:
-            reason = "No check-in after day 0 analysed yet."
+            reason = "No checkpoint (day 7, 14, 21) analysed yet."
         else:
             reason = "Some claimed concerns have no scores."
     elif results == {IMPROVED}:

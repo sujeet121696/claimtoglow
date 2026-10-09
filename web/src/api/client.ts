@@ -1,7 +1,9 @@
 // Client for the local API (app/main.py), proxied by Vite. One function per endpoint, so each maps
-// 1:1 to a future agent tool (VISION D1, D2).
+// 1:1 to a future agent tool (VISION D1, D2). In demo mode the read-only calls load the exported
+// files in data/ instead (scripts/export_demo.py).
+import { DEMO } from "../app/mode";
 import type { GateRecord } from "../lib/gate";
-import type { ClaimSuggestion, NoiseRow, Person, Photo, PhotoMeta, PhotoSet, SetSummary, TrialFields } from "./types";
+import type { ClaimSuggestion, NoiseRow, Person, Photo, PhotoMeta, PhotoSet, Receipt, SetSummary, Timeline, TrialFields } from "./types";
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init);
@@ -19,8 +21,14 @@ const json = (method: string, data: unknown): RequestInit => ({
   body: JSON.stringify(data),
 });
 
+/** Live endpoint in the lab, exported file in the demo (relative, so the demo works under any path). */
+const source = (live: string, file: string) => (DEMO ? `data/${file}` : live);
+
 export const api = {
-  people: () => call<{ people: Person[]; today: string }>("/api/people"),
+  people: () => call<{ people: Person[]; today: string }>(source("/api/people", "people.json")),
+  timeline: (person: string) => call<Timeline>(source(`/api/people/${person}/timeline`, `${person}/timeline.json`)),
+  receipt: (person: string) => call<Receipt>(source(`/api/people/${person}/receipt`, `${person}/receipt.json`)),
+  badgeUrl: (person: string) => source(`/api/people/${person}/badge.svg`, `${person}/badge.svg`),
   unlock: (token: string) => call<{ unlocked: boolean }>("/api/unlock", json("POST", { token })),
   parseClaim: (claim: string, product: string) =>
     call<ClaimSuggestion>("/api/claims/parse", json("POST", { claim, product })),

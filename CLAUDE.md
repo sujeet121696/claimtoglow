@@ -12,7 +12,7 @@ counting only changes bigger than the measurement noise.
 | Deadline | Nov 2, 2026, 11:45 am ET |
 | Team | Sujeet, Sahni and Suvaani (all on the Devpost team; one trial and YouCam key each); eligible for Women in Tech |
 | Target | **Submit by Oct 26** (one week early); day-21 verdict added by Oct 29. Alongside Ringproof (Nebius, Oct 30) |
-| Status | Trials running since Oct 7, 21 days (checkpoints Oct 14, 21, 28). Lab, gate, noise test, verdict engine, claim agent and hosting done; 3-photo checkpoints next (due Oct 13) |
+| Status | Trials running since Oct 7, 21 days (checkpoints Oct 14, 21, 28). Lab, gate, noise test, verdict engine, claim agent, hosting, 3-photo checkpoints, gate check, timeline, receipt and judge demo (claimtoglow.kharidwise.com/demo/) done (Oct 8–9). Next: social post, checkpoints, video |
 
 ## Stack
 
@@ -27,6 +27,7 @@ Python + FastAPI (`app/`), React + Vite + TypeScript (`web/`). Run instructions 
 | [docs/RULES.md](docs/RULES.md) | Coding and workflow rules |
 | [docs/DESIGN.md](docs/DESIGN.md) | UI/UX direction |
 | [docs/TASKS.md](docs/TASKS.md) | Build checklist and progress |
+| [docs/DEVPOST.md](docs/DEVPOST.md) | Devpost submission text |
 | [docs/VISION.md](docs/VISION.md) | Post-hackathon AI agent, scaling decisions (D1–D10), phases |
 
 ## Working agreements
