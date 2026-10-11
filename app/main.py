@@ -18,7 +18,7 @@ from typing import Literal
 from fastapi import Body, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .analyzer import DEFAULT_ACTIONS, analyze_cached, cached_scores, mirror_halves, photo_files, result_dir
 from .claim import parse_claim
@@ -276,6 +276,10 @@ class TrialFields(BaseModel):
     concerns: list[Literal[tuple(DEFAULT_ACTIONS)]] = []  # what the claim says will change
 
 
+class Reminder(BaseModel):
+    time: str = Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")  # "19:00", local time
+
+
 class Unlock(BaseModel):
     token: str
 
@@ -363,6 +367,16 @@ def save_person(person: str, fields: TrialFields):
     data = fields.model_dump()
     data["start_date"] = fields.start_date.isoformat() if fields.start_date else None
     write_trial(person, data)
+    return summary(person)
+
+
+@app.put("/api/people/{person}/reminder")
+def save_reminder(person: str, body: Reminder):
+    """The time of this person's daily calendar reminder, saved when it is added (Today card).
+    Kept apart from save_person so the trial form doesn't overwrite it."""
+    if person not in people():
+        raise HTTPException(404, f"No trial for {person!r}")
+    write_trial(person, {"reminder_time": body.time})
     return summary(person)
 
 

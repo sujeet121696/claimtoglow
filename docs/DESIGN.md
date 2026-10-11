@@ -13,7 +13,7 @@
 | Screen | Shows |
 |---|---|
 | Claim | Product name, claim text, the agent's metric mapping and deadline |
-| Capture | Live camera, day-0 ghost overlay, live checks (light, framing, pose), shutter enabled only when all pass |
+| Capture | Live camera, day-0 ghost overlay (off by default), live checks (light, framing, pose), shutter enabled only when all pass |
 | Timeline | Check-ins by day, per-concern line with the noise band shaded |
 | Verdict / receipt | Receipt-style page: each claimed concern, change, ✓/✗/–, photo hashes, dates |
 | Badge | Embeddable "Verified results" snippet for a product page |
@@ -30,6 +30,7 @@
 | Lab is organised by person (Oct 7) | Users think "my trial", not "photo sets": person picker, Today screen, Daily check-in / Repeat photos instead of typed set names |
 | Phone layout (Oct 9) | Below 640 px the pages become a bottom tab bar with icons (thumb reach, like a native app); the top row keeps only the brand, the person and Install. Nothing may be wider than the screen: wide tables and option switches scroll inside themselves, the first table column stays pinned. 40 px tap targets on touch screens; safe areas for notched phones |
 | Progress as a ring (Oct 9) | Each Today card shows the day in a ring with a tick per checkpoint, plus "Next checkpoint: day 7, in 5 days", so the plan is visible at a glance |
+| Reminders in the calendar (Oct 11) | The phone's own calendar rings (7 PM default, 7 AM preset, or any time; day 0's time shown as a hint), so no email/SMS service, account or cost; one tap per person (.ics or Google Calendar) |
 | Motion is quiet (Oct 9) | Pages fade in, cards appear one after another, the ring fills on load. Opacity only (a transform would trap the full-screen camera), and none at all when the device asks for reduced motion |
 | Charts at real size (Oct 9) | The timeline chart is drawn at the width it is shown, so its text is the same size on a phone and a laptop |
 

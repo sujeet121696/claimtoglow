@@ -34,6 +34,7 @@ export const api = {
     call<ClaimSuggestion>("/api/claims/parse", json("POST", { claim, product })),
   labLink: () => call<{ wifi: string; public: string | null }>("/api/lab-link"),
   savePerson: (person: string, fields: TrialFields) => call<Person>(`/api/people/${person}`, json("PUT", fields)),
+  saveReminder: (person: string, time: string) => call<Person>(`/api/people/${person}/reminder`, json("PUT", { time })),
 
   sets: () => call<{ sets: SetSummary[] }>("/api/sets").then((r) => r.sets),
   set: (name: string) => call<PhotoSet>(`/api/sets/${name}`),

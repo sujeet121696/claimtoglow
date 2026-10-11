@@ -8,8 +8,8 @@ const payer = (keyVar: string) => {
   return m ? `${personLabel(m[1].toLowerCase())}'s key` : "the main key";
 };
 
-/** Runs YouCam analyses on pending photos with one click. Every success costs units, so the bar
- *  says whose key pays, and a run can be stopped after the current photo. */
+/** Runs YouCam analyses on pending photos with one click. Hovering a button shows whose key pays;
+ *  a run can be stopped after the current photo. */
 export function AnalyseBar({ pending, keyVar, busy, onRun, onStop }: {
   pending: Record<Mode, number>;
   keyVar: string;
@@ -27,11 +27,12 @@ export function AnalyseBar({ pending, keyVar, busy, onRun, onStop }: {
   }
   return (
     <div className="analyse-bar">
-      <button disabled={!pending.whole} onClick={() => onRun("whole")}>Analyse whole face ({pending.whole})</button>
-      <button disabled={!pending.split} onClick={() => onRun("split")} title="Each photo is analysed as two mirrored halves">
+      <button disabled={!pending.whole} onClick={() => onRun("whole")} title={`Paid from ${payer(keyVar)}`}>
+        Analyse whole face ({pending.whole})
+      </button>
+      <button disabled={!pending.split} onClick={() => onRun("split")} title={`Each photo is analysed as two mirrored halves. Paid from ${payer(keyVar)}`}>
         Analyse split-face ({pending.split} × 2)
       </button>
-      <span className="small muted">Paid from {payer(keyVar)}; each success costs units.</span>
     </div>
   );
 }

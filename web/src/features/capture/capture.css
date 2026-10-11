@@ -3,8 +3,12 @@
 .stage { position: relative; background: #000; border-radius: var(--radius); overflow: hidden; min-height: 360px; display: grid; place-items: center; }
 .view { display: block; width: 100%; height: auto; max-height: 76vh; object-fit: contain; }
 .hidden-video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-.stage-empty { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: var(--space-2); padding: var(--space-4); color: #fff; text-align: center; }
+/* Stacked in one grid cell with the canvas, so the box grows if the text needs more room (small phones). */
+.view, .stage-empty { grid-area: 1 / 1; }
+.stage-empty { align-self: stretch; justify-self: stretch; display: grid; place-content: center; justify-items: center; gap: var(--space-2); padding: var(--space-4); color: #fff; text-align: center; }
 .stage-empty p { margin: 0; opacity: 0.8; }
+.perm-steps { margin: 0; padding-left: 1.2em; max-width: 34em; text-align: left; opacity: 0.85; }
+.perm-steps li + li { margin-top: var(--space-1); }
 
 .capture-side { display: grid; gap: var(--space-4); }
 .shutter { display: flex; gap: var(--space-2); margin-top: var(--space-3); }

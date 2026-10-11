@@ -11,7 +11,7 @@ def demo_people() -> dict:
     cards = []
     for person in people():
         card = summary(person)
-        card.update({"notes": "", "key_var": "", "day0": None, "latest": None})
+        card.update({"notes": "", "key_var": "", "reminder_time": None, "day0": None, "latest": None})
         cards.append(card)
     return {"people": cards, "today": date.today().isoformat()}
 

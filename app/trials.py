@@ -19,7 +19,8 @@ from .noise import split_pairs
 from .verdict import verdict
 
 PERSON_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,30}$")
-DEFAULTS = {"product": "", "claim": "", "concerns": [], "notes": "", "treated_side": "L", "start_date": None, "duration_days": 21}
+DEFAULTS = {"product": "", "claim": "", "concerns": [], "notes": "", "treated_side": "L", "start_date": None, "duration_days": 21,
+            "reminder_time": None}  # "19:00": the daily calendar reminder this person added
 NOISE_TARGET = 5
 CHECKPOINT_EVERY = 7
 CHECKPOINT_PHOTOS = 3

@@ -39,7 +39,7 @@ button, .button {
 button:hover:not(:disabled), .button:hover { border-color: var(--text); }
 button:active:not(:disabled), .button:active { transform: scale(0.97); }
 button:disabled { opacity: 0.45; cursor: default; }
-button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+button.primary, .button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
 button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
 button.ghost:hover:not(:disabled) { color: var(--text); border-color: var(--border); }
 button.small, .button.small { padding: 3px 9px; font-size: 13px; }
