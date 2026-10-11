@@ -175,6 +175,10 @@ day-00. Daily single photos are still taken and kept.
         Cloudflare Access bypasses only the path `demo`; the lab still needs the team login.
         Checked Oct 9 from outside: /demo 200, lab and /api redirect to the login. Added to
         Devpost "Try it out". The PC, API and tunnel must stay on through judging (Nov 3–20)
+23b. [x] Daily reminder (Oct 11): Today card → "Daily reminder" adds the remaining check-ins to the
+        phone's calendar at 7 PM by default, 7 AM in one tap, or any time (the button fits the device: .ics on iPhone, Google Calendar link on
+        Android, both on a computer). Checkpoint days get their own event. No email/SMS service; links carry no token.
+        The chosen time is saved per person (trial.json) and shown on the card
 
 ## Oct 21 – 29 · Submit early → M5, M6
 19. [ ] Analyse the day-14 checkpoint (Oct 21), then the final day-21 checkpoint (Oct 28)

@@ -83,7 +83,7 @@ web/src/   app/        shell, hash router (#/page?key=value), store (people, sel
            lib/        gate.ts (capture checks), landmarker, segmenter (person mask),
                        gate and mask backfill, lab token, install (Install app), storage, beep
            components/ PageHeader, Card, Segmented, Field, Badge, ChecksList
-           features/   today, people, capture (Camera), upload (Uploader), results,
+           features/   today (DayRing, Reminder + calendar.ts), people, capture (Camera), upload (Uploader), results,
                        timeline (TrendChart), receipt (badge snippet)
            styles/     tokens.css (colours, spacing), base.css, components.css
 web/dist/  built app (npm run build), served by FastAPI at /. Git-ignored
@@ -111,6 +111,7 @@ results/   <set>/<stem>.json, <set>-split/<stem>-L.json. Git-ignored
 | Verdict engine | Claimed concerns, T − C per photo (baseline, checkpoint, repeats) | met / not met / not enough evidence, per-concern effect and floor | `app/verdict.py` + `trial_verdict` in `app/trials.py`; shown on Today; `GET /api/people/{person}/verdict` |
 | Timeline | Daily photos, T − C, baseline, repeat-photo SD | Chart per claimed concern with the noise band; check-in table | `timeline()` in `app/receipt.py`, `GET /api/people/{person}/timeline`, Timeline page |
 | Receipt | Claim, verdict, every photo's SHA-256 | Face-free record + `receipt_hash` (SHA-256 of its canonical JSON, without the time) + SVG badge | `receipt()`, `badge_svg()` in `app/receipt.py`; `GET /api/people/{person}/receipt`, `/badge.svg`; Receipt page |
+| Daily reminder | Time (7 AM / 7 PM / any), trial dates | Calendar events: .ics (alarm at the time) or a Google Calendar link; no token in links | `web/src/features/today/calendar.ts`, `Reminder.tsx`; time saved as `reminder_time` in trial.json via `PUT /api/people/{person}/reminder` |
 | Judge demo | Timeline, receipt, badge without photo links, notes or key names | Read-only site at `/demo/`, data live from `/demo/data/` (public) | `app/demo.py`, `npm run build:demo` → `web/dist-demo/`; `scripts/export_demo.py` for a static host |
 
 **Access:** `/api` and `/files` answer this PC freely; the app shell and `/demo/` (no faces) are
@@ -139,7 +140,7 @@ exists, the same camera (image size), the same distance (face width within ±8% 
 day 0's; required since Oct 8, after two day-1 photos came out at 58% vs 76%), and an optional match
 to day 0 (position, chin, brightness, light side): shown and recorded, but it doesn't block the photo (Oct 7: matched repeat
 photos still differed from day 0, so checkpoints average 3 photos instead). The camera page picks day 0's camera automatically, starts by itself
-once permitted (a newer start, e.g. a tap on Start camera, replaces an older one instead of failing), keeps the screen awake, and auto-captures by default on phones. A check must fail
+once permitted (a newer start, e.g. a tap on Start camera, replaces an older one instead of failing), keeps the screen awake, and auto-captures by default on phones. Before access is granted it shows "Allow camera" (the browser asks on that tap, which also unlocks the countdown beep on iPhones); if access is blocked it shows how to allow it in Chrome/Edge and Safari; on a non-https address it says so. The day-0 ghost is off by default. A check must fail
 for 0.4 s before the countdown restarts (landmark jitter), and a photo is only taken on a passing frame. Landscape cameras are cropped to 3:4.
 
 ## 5. Verdict rule (draft)

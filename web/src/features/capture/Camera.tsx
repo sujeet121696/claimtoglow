@@ -9,7 +9,7 @@ import type { Side } from "../../api/types";
 import { ChecksList } from "../../components/ChecksList";
 import { Card } from "../../components/ui";
 import { useReference } from "../../hooks/useReference";
-import { beep } from "../../lib/beep";
+import { beep, unlockAudio } from "../../lib/beep";
 import { loadPref, savePref } from "../../lib/storage";
 import { computeMetrics, evaluate, gateRecord, LIMITS, portraitCrop, requiredPass, samplePixels, type Check, type Crop, type Metrics } from "../../lib/gate";
 import { getLandmarker } from "../../lib/landmarker";
@@ -20,6 +20,11 @@ const DETECT_EVERY_MS = 100;
 // Landmarks jitter: a check must fail this long before the countdown restarts. The photo is still
 // taken only on a frame where every check passes.
 const GRACE_MS = 400;
+
+// Camera permission: "unknown" until the browser says (some can't, e.g. Firefox), "insecure" when
+// the page isn't https (phones on a plain http:// address get no camera at all).
+type Access = "unknown" | "prompt" | "granted" | "denied" | "insecure";
+const canUseCamera = () => window.isSecureContext && !!navigator.mediaDevices?.getUserMedia;
 
 // Short names for the check chips on the video.
 const CHIP: Record<string, string> = {
@@ -43,10 +48,11 @@ export function Camera({ setName, side, title, stepOut = false, done = false, on
   // Hands-free by default on phones (touch screens), where the phone sits on a stand.
   const [auto, setAuto] = useState(() => window.matchMedia("(pointer: coarse)").matches);
   const [fresh, setFresh] = useState(stepOut);
-  const [ghost, setGhost] = useState(true);
+  const [ghost, setGhost] = useState(false);
   const [steady, setSteady] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [access, setAccess] = useState<Access>(() => (canUseCamera() ? "unknown" : "insecure"));
   const [leaving, setLeaving] = useState(false); // waiting for the person to step out of frame
   const [justSaved, setJustSaved] = useState(""); // brief confirmation on the video
 
@@ -104,26 +110,45 @@ export function Camera({ setName, side, title, stepOut = false, done = false, on
       live.current.deviceLabel = track.label;
       setDeviceId(settings.deviceId ?? "");
       if (settings.deviceId) savePref("cameraId", settings.deviceId);
+      savePref("cameraAllowed", "1");
+      setAccess("granted");
       setDevices((await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput"));
       await getLandmarker("VIDEO");
       setRunning(true);
     } catch (e) {
       if (stale()) return;
-      const blocked = (e as Error).name === "NotAllowedError" || !window.isSecureContext;
-      setError(`Camera failed: ${(e as Error).message}.${blocked ? " Allow camera access, and on a phone open the https:// address." : " Tap Start camera again."}`);
+      const name = (e as Error).name;
+      if (name === "NotAllowedError" || name === "SecurityError") { setAccess("denied"); return; }
+      setError(name === "NotReadableError" ? "The camera is in use by another app. Close it and tap Start camera."
+        : name === "NotFoundError" || name === "OverconstrainedError" ? "No camera found. Connect one and tap Start camera."
+        : `Camera failed: ${(e as Error).message}. Tap Start camera again.`);
     }
   }
 
   useEffect(() => stop, []);
 
-  // Start by itself once camera access was granted before, after day 0 is known (to pick its camera).
+  // Once day 0 is known (to pick its camera): start by itself if access was granted before, and
+  // follow later changes (allowed or blocked in the browser's site settings). Browsers that can't
+  // report camera permission start only if this browser allowed it before; else the button asks.
   const autoStarted = useRef(false);
   useEffect(() => {
-    if (autoStarted.current || !reference.loaded) return;
+    if (autoStarted.current || !reference.loaded || !canUseCamera()) return;
     autoStarted.current = true;
-    navigator.permissions?.query({ name: "camera" as PermissionName })
-      .then((p) => { if (p.state === "granted") void start(); })
-      .catch(() => { /* permissions API unavailable: wait for the Start button */ });
+    let status: PermissionStatus | null = null;
+    Promise.resolve()
+      .then(() => navigator.permissions.query({ name: "camera" as PermissionName }))
+      .then((p) => {
+        status = p;
+        setAccess(p.state);
+        if (p.state === "granted") void start();
+        p.onchange = () => {
+          setAccess(p.state);
+          if (p.state === "granted" && !videoRef.current?.srcObject) void start();
+          if (p.state === "denied") stop();
+        };
+      })
+      .catch(() => { if (loadPref("cameraAllowed") === "1") void start(); });
+    return () => { if (status) status.onchange = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reference.loaded]);
 
@@ -338,10 +363,29 @@ export function Camera({ setName, side, title, stepOut = false, done = false, on
         <canvas ref={viewRef} className="view" />
         {!running && (
           <div className="stage-empty">
-            <button className="primary" onClick={() => start()}>Start camera</button>
-            <p className="small">Use the same camera, spot and light every day.</p>
-            {/* YouCam's shooting guide for skin analysis: forehead fully visible, glasses off. */}
-            <p className="small">Hair back so the forehead shows, glasses off.</p>
+            {access === "insecure" ? (
+              <p className="error">The camera only works on the secure address. Open the lab through its https:// link.</p>
+            ) : access === "denied" ? (
+              <>
+                <p><strong>Camera access is blocked</strong></p>
+                <p className="small">Allow it in the site settings, then tap Try again:</p>
+                <ul className="perm-steps small">
+                  <li>Chrome / Edge: tap the icon left of the address, then Permissions or Site settings, Camera, Allow.</li>
+                  <li>Safari on iPhone: tap “aA” in the address bar, then Website Settings, Camera, Allow.</li>
+                </ul>
+                <button className="primary" onClick={() => { unlockAudio(); void start(); }}>Try again</button>
+              </>
+            ) : (
+              <>
+                <button className="primary" onClick={() => { unlockAudio(); void start(); }}>
+                  {access === "granted" ? "Start camera" : "Allow camera"}
+                </button>
+                {access !== "granted" && <p className="small">Your browser will ask for camera access. The video is checked on this device; only the photos you take are saved.</p>}
+                <p className="small">Use the same camera, spot and light every day.</p>
+                {/* YouCam's shooting guide for skin analysis: forehead fully visible, glasses off. */}
+                <p className="small">Hair back so the forehead shows, glasses off.</p>
+              </>
+            )}
             {error && <p className="error">{error}</p>}
           </div>
         )}

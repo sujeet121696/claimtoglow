@@ -62,3 +62,11 @@
   .day0.with-latest { grid-template-columns: 56px 1fr 56px 1fr; gap: var(--space-2); }
   .day0 img { width: 56px; height: 72px; }
 }
+
+/* Daily reminder: collapsed by default, wraps on a phone. */
+.reminder summary { cursor: pointer; color: var(--muted); }
+.reminder[open] summary { margin-bottom: var(--space-2); }
+.reminder-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.reminder-row label { display: flex; align-items: center; gap: var(--space-1); }
+.reminder .reminder-note { margin: var(--space-2) 0 0; }
+.reminder-row + .reminder-row { margin-top: var(--space-2); }

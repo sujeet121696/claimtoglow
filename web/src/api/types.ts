@@ -40,6 +40,7 @@ export type Person = {
   treated_side: Side;
   start_date: string | null;
   duration_days: number;
+  reminder_time: string | null; // "19:00": the daily calendar reminder, once added
   key_var: string;
   day: number | null;
   checkins: string[];

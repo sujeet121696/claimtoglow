@@ -4,6 +4,7 @@ import type { Person } from "../../api/types";
 import { Badge } from "../../components/ui";
 import { CHANGE, concernLabel, dayStem, personLabel, sideShort, statusTone, type Kind } from "../../domain/trial";
 import { DayRing, nextCheckpoint } from "./DayRing";
+import { Reminder } from "./Reminder";
 
 const GateBadge = ({ passed }: { passed: boolean | null | undefined }) =>
   passed == null ? <Badge tone="neutral">checking</Badge>
@@ -69,6 +70,7 @@ export function PersonCard({ person: p }: { person: Person }) {
           {!noiseDone && <Actions kind="noise" />}
         </li>
       </ul>
+      <Reminder person={p} />
 
       <div className="verdict small">
         <b>Verdict</b>
