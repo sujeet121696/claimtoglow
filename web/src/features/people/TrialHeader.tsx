@@ -1,5 +1,5 @@
 // Page header for pages that save photos: whose trial, which product, which side, and what kind of
-// photo is being saved. The kind lives in the URL (#/capture?kind=noise) so links can point at it.
+// photo is being saved. The kind lives in the URL (/capture?kind=noise) so links can point at it.
 import { useRoute, type Page } from "../../app/router";
 import type { Person } from "../../api/types";
 import { PageHeader } from "../../components/ui";

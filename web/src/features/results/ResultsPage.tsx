@@ -1,5 +1,5 @@
 // Results: pick a set, analyse it with YouCam (raw_score only), and compare changes with the noise
-// floor from the person's repeat photos. The set lives in the URL: #/results?set=trial-sahni.
+// floor from the person's repeat photos. The set lives in the URL: /results?set=trial-sahni.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRoute } from "../../app/router";
 import { useStore } from "../../app/store";

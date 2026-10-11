@@ -12,3 +12,5 @@ web/dist-demo/
 web/public/mediapipe/
 .vite/
 *.tsbuildinfo
+/lab.db
+/lab.db-*

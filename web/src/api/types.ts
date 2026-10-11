@@ -111,3 +111,33 @@ export type Receipt = {
   generated_at: string;
   receipt_hash: string;
 };
+
+// Sign-in (app/auth.py) and the admin page (app/admin.py).
+export type SignInMethod = "google" | "github" | "linkedin" | "email" | "password";
+export type Me = {
+  user: { email: string; username: string | null; name: string | null; admin: boolean } | null;
+  methods: SignInMethod[];
+  lab_links: boolean; // a pasted lab link still opens the lab (Admin → Settings → Who gets in)
+  public_url: string | null; // the tunnel's address, when set (PUBLIC_URL)
+};
+export type RemoteAccess = "link_or_signin" | "signin_only";
+export type AdminTrial = {
+  person: string; product: string; day: number | null; duration_days: number;
+  today_count: number; today_target: number; today_done: boolean;
+  latest: { stem: string; gate_passed: boolean | null } | null;
+  verdict: VerdictStatus; reminder_time: string | null; key_var: string;
+};
+export type KeyUsage = { key_var: string; analyses: number; units_used: number; units_granted: number | null; units_left: number | null };
+export type AccessEntry = {
+  at: string; event: "sign-in" | "sign-out" | "lab-open" | "unlock" | "admin"; email: string | null;
+  method: string | null; ip: string | null; device: string | null; ok: number; detail: string | null;
+};
+export type AdminOverview = {
+  trials: AdminTrial[]; usage: KeyUsage[]; units_per_analysis: number; log: AccessEntry[];
+  settings: { remote_access: RemoteAccess };
+};
+export type AdminUser = {
+  id: number; email: string; username: string | null; name: string | null; admin: boolean; owner: boolean;
+  disabled: boolean; has_password: boolean; methods: string[]; created_at: string; last_seen_at: string | null;
+};
+export type NewUser = { email: string; username: string; name: string; admin: boolean; password: string };

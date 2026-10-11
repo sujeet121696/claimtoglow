@@ -3,6 +3,7 @@
 // a product page back to this receipt.
 import { useState } from "react";
 import { DEMO } from "../../app/mode";
+import { href } from "../../app/router";
 import { useStore } from "../../app/store";
 import { api } from "../../api/client";
 import type { Receipt, ReceiptPhoto } from "../../api/types";
@@ -139,7 +140,7 @@ function PhotosCard({ r }: { r: Receipt }) {
 function BadgeCard({ r }: { r: Receipt }) {
   const [copied, setCopied] = useState(false);
   const badge = api.badgeUrl(r.person);
-  const page = new URL(`#/receipt?person=${r.person}`, window.location.href).href;
+  const page = new URL(href("receipt", { person: r.person }), window.location.href).href;
   const snippet = `<a href="${page}"><img src="${new URL(badge, window.location.href).href}" alt="Claim to Glow: ${r.verdict.status}"></a>`;
   const copy = () => navigator.clipboard.writeText(snippet).then(() => setCopied(true)).catch(() => setCopied(false));
   return (

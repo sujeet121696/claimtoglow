@@ -93,7 +93,45 @@ cloudflared --config ~/.cloudflared/claimtoglow.yml tunnel run
 ```
 
 Share the lab: Today → "Open on phone" → **Anywhere** → scan or Copy link. Two locks protect it:
-Cloudflare Access (team emails only) and the lab token in that link.
+Cloudflare Access (team emails only) and the lab token in that link (or a sign-in, see below).
+
+## Sign-in and admin page
+
+Optional on top of Cloudflare Access and the lab link: team accounts, and an admin page
+(account menu → Admin) with every trial, YouCam usage per key, users, the access log and settings.
+Invite-only: the emails in `ADMIN_EMAILS` are admins; everyone else is added on the admin page.
+Accounts, sessions and the log live in `lab.db` (git-ignored); passwords are stored as scrypt hashes.
+
+**Once:**
+
+1. Add your email to `.env`: `ADMIN_EMAILS=you@example.com` (comma-separated for more owners).
+2. Either add yourself with a password (works without any provider):
+   `.venv/Scripts/python -m app.users add you@example.com --username you --admin`
+   or set up one or more providers below and sign in with them.
+3. Restart the server.
+
+**Providers** (each is offered only when both of its keys are in `.env`). Register this callback URL
+with each, for the address you sign in from, e.g. `https://claimtoglow.kharidwise.com/api/auth/callback/google`:
+
+| Provider | Where | `.env` |
+|---|---|---|
+| Google | Google Cloud Console → APIs & Services → Credentials → OAuth client ID (Web application); the consent screen in Testing mode allows only its listed test users | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+| GitHub | GitHub → Settings → Developer settings → OAuth Apps → New (one callback URL per app) | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` |
+| LinkedIn | linkedin.com/developers → Create app → Products: Sign In with LinkedIn using OpenID Connect → Auth: redirect URL | `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` |
+| Email link | Resend (resend.com), sender on a verified domain; the link goes to `PUBLIC_URL` when set | `RESEND_API_KEY`, `EMAIL_FROM` |
+
+The keys can be the ones kharidwise uses (same Google, LinkedIn and Resend accounts): add the
+claimtoglow callback URL to the existing Google client and LinkedIn app. A GitHub OAuth app has only
+one callback URL, so claimtoglow needs its own GitHub app.
+
+An email link is sent only to an invited email, works once for 15 minutes, and needs a press on
+"Sign in" (so email scanners can't use it up). A provider signs someone in only when it says the email is verified and that email has an account
+(or is in `ADMIN_EMAILS`). A device that isn't let in opens on the sign-in page and returns to where it
+was afterwards. Admin → Settings → **Who gets in**: "Lab link or sign-in" (default: this PC opens
+freely, phones with the lab link or a sign-in) or "Sign-in only" (every device signs in first, this PC
+too; lab links stop working). The admin page always needs a sign-in.
+Forgot the password: `.venv/Scripts/python -m app.users password you@example.com`.
+Locked out by "Sign-in only": `.venv/Scripts/python -m app.users allow-links`.
 
 ## Judge demo (read-only, no faces)
 
