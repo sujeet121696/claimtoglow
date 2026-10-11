@@ -1,5 +1,7 @@
 // App shell: top bar (brand, navigation, person) and the current page.
 import { useEffect, type ComponentType } from "react";
+import { AdminPage } from "../features/account/AdminPage";
+import { LoginPage } from "../features/account/LoginPage";
 import { CapturePage } from "../features/capture/CapturePage";
 import { PersonEditor } from "../features/people/PersonEditor";
 import { PersonPicker } from "../features/people/PersonPicker";
@@ -10,10 +12,10 @@ import { TodayPage } from "../features/today/TodayPage";
 import { UploadPage } from "../features/upload/UploadPage";
 import { PageIcon } from "../components/icons";
 import { Empty } from "../components/ui";
+import { AccountMenu } from "./AccountMenu";
 import { InstallButton } from "./InstallButton";
-import { LockScreen } from "./LockScreen";
 import { DEMO } from "./mode";
-import { HOME, href, NAV, PAGES, useRoute, type Page } from "./router";
+import { currentPage, HOME, href, NAV, navigate, PAGES, useRoute, type Page } from "./router";
 import { StoreProvider, useStore } from "./store";
 
 const VIEWS: Record<Page, ComponentType> = {
@@ -23,16 +25,26 @@ const VIEWS: Record<Page, ComponentType> = {
   results: ResultsPage,
   timeline: TimelinePage,
   receipt: ReceiptPage,
+  login: LoginPage,
+  admin: AdminPage,
 };
+
+// Pages that work without a trial and on a locked device (signing in is how it unlocks).
+const STANDALONE: Page[] = ["login", "admin"];
 
 function Shell() {
   const [route] = useRoute();
   const { people, editing, locked, selectPerson } = useStore();
   const View = VIEWS[route.page];
-  const needsPerson = route.page !== "today" && !people.length;
-  // Shared links name the person (#/receipt?person=sahni).
+  const standalone = STANDALONE.includes(route.page);
+  const needsPerson = route.page !== "today" && !standalone && !people.length;
+  // Shared links name the person (/receipt?person=sahni).
   const linked = route.params.get("person");
   useEffect(() => { if (linked) selectPerson(linked); }, [linked, selectPerson]);
+  // A device the server won't let in goes to the sign-in page first, then back to where it was.
+  useEffect(() => {
+    if (locked && !standalone) navigate(href("login", { next: currentPage() }), { replace: true });
+  }, [locked, standalone]);
 
   return (
     <div className="app">
@@ -52,12 +64,11 @@ function Shell() {
         </nav>
         {people.length > 0 && <PersonPicker />}
         {!DEMO && <InstallButton />}
+        {!DEMO && <AccountMenu />}
       </header>
 
       <main className="page" key={route.page}>
-        {locked ? (
-          <LockScreen reason={locked} />
-        ) : needsPerson ? <Empty>{DEMO ? "Loading the trial data…" : "Add a person on the Today page first."}</Empty> : <View />}
+        {locked && !standalone ? null : needsPerson ? <Empty>{DEMO ? "Loading the trial data…" : "Add a person on the Today page first."}</Empty> : <View />}
       </main>
 
       <footer className="footer muted small">

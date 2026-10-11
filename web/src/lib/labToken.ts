@@ -1,6 +1,6 @@
 // Another device unlocks the lab with the lab token. The server checks it and sets an HttpOnly
 // cookie, which API calls and photo URLs then carry. Two ways in: opening the lab link
-// (…/?token=…), or pasting that link on the lock screen (when a sign-in step drops ?token).
+// (…/capture?token=…), or pasting that link on the sign-in page (when a sign-in step drops ?token).
 import { api } from "../api/client";
 
 /** The token from a pasted lab link, or the bare token itself. */
@@ -19,5 +19,5 @@ export async function adoptTokenFromUrl(): Promise<void> {
   if (!token) return;
   url.searchParams.delete("token");
   window.history.replaceState(null, "", url.pathname + url.search + url.hash);
-  await api.unlock(token).catch(() => undefined); // a wrong token just leaves the lock screen up
+  await api.unlock(token).catch(() => undefined); // a wrong token just leaves the sign-in page up
 }

@@ -3,7 +3,7 @@
 // files in data/ instead (scripts/export_demo.py).
 import { DEMO } from "../app/mode";
 import type { GateRecord } from "../lib/gate";
-import type { ClaimSuggestion, NoiseRow, Person, Photo, PhotoMeta, PhotoSet, Receipt, SetSummary, Timeline, TrialFields } from "./types";
+import type { AdminOverview, AdminUser, ClaimSuggestion, Me, NewUser, NoiseRow, Person, Photo, PhotoMeta, PhotoSet, Receipt, RemoteAccess, SetSummary, Timeline, TrialFields } from "./types";
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init);
@@ -34,6 +34,24 @@ export const api = {
     call<ClaimSuggestion>("/api/claims/parse", json("POST", { claim, product })),
   labLink: () => call<{ wifi: string; public: string | null }>("/api/lab-link"),
   savePerson: (person: string, fields: TrialFields) => call<Person>(`/api/people/${person}`, json("PUT", fields)),
+  me: () => call<Me>("/api/me"),
+  passwordLogin: (login: string, password: string) => call<{ signed_in: boolean }>("/api/auth/password", json("POST", { login, password })),
+  /** Mails a one-time sign-in link (to invited emails only; the reply is the same either way). */
+  emailLink: (email: string, next: string) => call<null>("/api/auth/email", json("POST", { email, next })),
+  emailVerify: (token: string) => call<{ signed_in: boolean }>("/api/auth/email-verify", json("POST", { token })),
+  logout: () => call<{ signed_in: boolean }>("/api/auth/logout", { method: "POST" }),
+  /** Full-page sign-in with a provider; comes back to `next` (a lab page such as /admin). */
+  oauthUrl: (provider: string, next: string) => `/api/auth/start?${new URLSearchParams({ provider, next })}`,
+  admin: {
+    overview: () => call<AdminOverview>("/api/admin/overview"),
+    users: () => call<{ users: AdminUser[] }>("/api/admin/users").then((r) => r.users),
+    addUser: (user: NewUser) => call<{ users: AdminUser[] }>("/api/admin/users", json("POST", user)).then((r) => r.users),
+    changeUser: (id: number, change: { admin?: boolean; disabled?: boolean; password?: string }) =>
+      call<{ users: AdminUser[] }>(`/api/admin/users/${id}`, json("PATCH", change)).then((r) => r.users),
+    removeUser: (id: number) => call<{ users: AdminUser[] }>(`/api/admin/users/${id}`, { method: "DELETE" }).then((r) => r.users),
+    saveSettings: (settings: { remote_access?: RemoteAccess; units_granted?: Record<string, number> }) =>
+      call<AdminOverview>("/api/admin/settings", json("PUT", settings)),
+  },
   saveReminder: (person: string, time: string) => call<Person>(`/api/people/${person}/reminder`, json("PUT", { time })),
 
   sets: () => call<{ sets: SetSummary[] }>("/api/sets").then((r) => r.sets),

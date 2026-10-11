@@ -179,6 +179,12 @@ day-00. Daily single photos are still taken and kept.
         phone's calendar at 7 PM by default, 7 AM in one tap, or any time (the button fits the device: .ics on iPhone, Google Calendar link on
         Android, both on a computer). Checkpoint days get their own event. No email/SMS service; links carry no token.
         The chosen time is saved per person (trial.json) and shown on the card
+23c. [x] Sign-in and admin page (Oct 11): Google, GitHub, LinkedIn, email link (Resend) and username/email + password,
+        invite-only (ADMIN_EMAILS + admin page). Admin: trials, YouCam usage per key, users, access
+        log, settings (other devices: lab link or sign-in, or sign-in only). Stdlib only (sqlite3,
+        scrypt, urllib); lab.db git-ignored. Lab links keep working, so the trial isn't affected.
+        Keys copied from kharidwise (.env). To do (you): add the claimtoglow callback URL to the Google
+        client and LinkedIn app, a new GitHub OAuth app, then restart (README: Sign-in)
 
 ## Oct 21 – 29 · Submit early → M5, M6
 19. [ ] Analyse the day-14 checkpoint (Oct 21), then the final day-21 checkpoint (Oct 28)

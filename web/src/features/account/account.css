@@ -1,0 +1,59 @@
+/* Sign-in page, account menu and admin page (features/account, app/AccountMenu.tsx). */
+
+/* Account menu in the top bar. */
+.account { position: relative; }
+.account-button { display: inline-grid; place-items: center; flex: none; width: 34px; height: 34px; min-height: 34px; padding: 0; border-radius: 50%; font-weight: 700; background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.account-button.signed-out { background: var(--surface); color: var(--text); border-color: var(--border-strong); }
+.account-button .icon { width: 18px; height: 18px; }
+.account-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 35; min-width: 200px; display: grid; gap: 2px; padding: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); box-shadow: 0 6px 18px rgb(0 0 0 / 0.14); }
+.account-menu a, .account-menu .link-button { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: var(--radius-sm); color: var(--text); text-decoration: none; text-align: left; font: inherit; }
+.account-menu a:hover, .account-menu .link-button:hover { background: var(--bg); }
+.account-menu .icon { width: 18px; height: 18px; }
+.account-who { display: grid; padding: 6px 8px 8px; border-bottom: 1px solid var(--border); margin-bottom: 4px; overflow-wrap: anywhere; }
+
+/* Sign-in page. */
+.login-card { width: 100%; max-width: 420px; margin: var(--space-4) auto; display: grid; gap: var(--space-3); }
+.login-card h1 { margin: 0; font-size: 22px; }
+.login-card p { margin: 0; }
+.login-providers { display: grid; gap: var(--space-2); }
+.login-providers .button { display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; min-height: 42px; }
+.login-providers svg { flex: none; }
+.login-or { display: flex; align-items: center; gap: var(--space-2); }
+.login-or::before, .login-or::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
+.login-form { display: grid; gap: var(--space-3); }
+.login-form input { width: 100%; }
+.login-submit { width: 100%; min-height: 42px; }
+.login-switch { justify-self: center; font-size: 14px; }
+.login-password { display: flex; gap: 6px; align-items: center; }
+.login-password input { flex: 1; min-width: 0; }
+.login-msg { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--fail-bg); color: var(--fail); }
+.login-sent { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-sm); background: var(--pass-bg); }
+.login-sent p { margin: 0; overflow-wrap: anywhere; }
+.login-card .login-trust { display: flex; gap: 6px; align-items: center; margin-top: var(--space-1); }
+.login-trust svg { flex: none; }
+.login-phone { display: flex; gap: var(--space-3); align-items: center; padding: var(--space-3); border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); }
+.login-phone img { flex: none; border-radius: 6px; background: #fff; }
+.login-phone p { overflow-wrap: anywhere; }
+.login-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* Admin page. */
+.admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.admin-table th, .admin-table td { text-align: left; }
+/* One line per cell (the table scrolls sideways on a phone); long notes wrap. */
+.admin-table .wrap { white-space: normal; min-width: 180px; }
+.admin-table th { font-size: 12px; font-weight: 600; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.admin-table td { padding: 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.admin-table tr.off td, .admin-table tr.failed td:first-child { opacity: 0.7; }
+.admin-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.admin-actions form { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-actions input { width: 150px; }
+.admin-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-4); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
+.admin-form .option { display: flex; align-items: center; gap: var(--space-2); }
+.admin-form-actions { display: flex; gap: var(--space-2); align-items: end; }
+.admin-note { margin: var(--space-3) 0 0; }
+.admin-setting { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-2) var(--space-4); padding: var(--space-2) 0; }
+.admin-setting + .admin-setting { border-top: 1px solid var(--border); }
+.admin-setting p { margin: 2px 0 0; max-width: 60ch; }
+.units-input { width: 100px; }
+button.danger { background: var(--fail); border-color: var(--fail); color: #fff; }
+@media (pointer: coarse) { .account-button { width: 40px; height: 40px; min-height: 40px; } }

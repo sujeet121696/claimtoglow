@@ -43,7 +43,7 @@ function plan(p: Person, time: string): Plan | null {
 /** When the first reminder rings, to show next to the time field. */
 export const firstReminder = (p: Person, time: string) => plan(p, time)?.first ?? null;
 
-const lab = (p: Person, origin: string) => `${origin}/${href("capture", { kind: "trial", person: p.person })}`;
+const lab = (p: Person, origin: string) => `${origin}${href("capture", { kind: "trial", person: p.person })}`;
 const title = (p: Person) => `Claim to Glow: ${personLabel(p.person)}'s selfie`;
 const details = (p: Person, origin: string) => `Same spot, same light, same camera as day 0. Open the camera: ${lab(p, origin)}`;
 

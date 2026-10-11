@@ -74,8 +74,11 @@ app/       FastAPI: config.py (paths, settings), youcam.py (client), analyzer.py
            verdict.py (pure verdict rule), llm.py (providers), claim.py (claim agent),
            masking.py (background-free copies), trials.py (people, trial.json, day numbering,
            retake, data for the verdict), receipt.py (timeline, receipt, badge), demo.py
-           (face-free demo data), main.py (API)
-web/src/   app/        shell, hash router (#/page?key=value), store (people, selected person),
+           (face-free demo data), db.py (lab.db: users, sessions, access log, settings), net.py
+           (client address, device), auth.py (sign-in, sessions), admin.py (admin API),
+           users.py (CLI: add an account, reset a password), mail.py (Resend), main.py (API)
+web/src/   app/        shell, router (clean paths /page?key=value in the lab, served by the API's app fallback; #/page in the demo; old #/ links are converted), store (people, selected person, me),
+                       AccountMenu (sign in / account / Admin / sign out),
                        mode (DEMO: read-only build, data from data/ instead of the API)
            api/        typed client, one function per endpoint (future agent tools, VISION D1)
            domain/     trial rules: kinds, set names, labels, concerns (mirrors app/trials.py)
@@ -83,13 +86,14 @@ web/src/   app/        shell, hash router (#/page?key=value), store (people, sel
            lib/        gate.ts (capture checks), landmarker, segmenter (person mask),
                        gate and mask backfill, lab token, install (Install app), storage, beep
            components/ PageHeader, Card, Segmented, Field, Badge, ChecksList
-           features/   today (DayRing, Reminder + calendar.ts), people, capture (Camera), upload (Uploader), results,
+           features/   account (LoginPage, LabLinkForm, PhoneQr, AdminPage, UsersCard), today (DayRing, Reminder + calendar.ts), people, capture (Camera), upload (Uploader), results,
                        timeline (TrendChart), receipt (badge snippet)
            styles/     tokens.css (colours, spacing), base.css, components.css
 web/dist/  built app (npm run build), served by FastAPI at /. Git-ignored
 web/dist-demo/ judge demo app (npm run build:demo), served at /demo/ with live data. Git-ignored
 scripts/   noise_test.py (CLI), export_demo.py (demo as a static site, only for a static host)
-tests/     unittest: verdict rule, checkpoint days and names, receipt hash and badge, claim agent and provider fallback (no network)
+tests/     unittest: verdict rule, checkpoint days and names, receipt hash and badge, claim agent and provider fallback,
+           sign-in (password hashing, safe redirects, wrong-password limit, admins, email links) (no network)
 photos/    <set>/<stem>.jpg + <stem>.meta.json (gate result, SHA-256). Git-ignored
            <set>/_mask/<stem>.png (person mask) + <stem>.jpg (room replaced by flat grey)
            trial-<person>/trial.json: product, claim, claimed concerns, treated side, day 0, length.
@@ -112,6 +116,7 @@ results/   <set>/<stem>.json, <set>-split/<stem>-L.json. Git-ignored
 | Timeline | Daily photos, T − C, baseline, repeat-photo SD | Chart per claimed concern with the noise band; check-in table | `timeline()` in `app/receipt.py`, `GET /api/people/{person}/timeline`, Timeline page |
 | Receipt | Claim, verdict, every photo's SHA-256 | Face-free record + `receipt_hash` (SHA-256 of its canonical JSON, without the time) + SVG badge | `receipt()`, `badge_svg()` in `app/receipt.py`; `GET /api/people/{person}/receipt`, `/badge.svg`; Receipt page |
 | Daily reminder | Time (7 AM / 7 PM / any), trial dates | Calendar events: .ics (alarm at the time) or a Google Calendar link; no token in links | `web/src/features/today/calendar.ts`, `Reminder.tsx`; time saved as `reminder_time` in trial.json via `PUT /api/people/{person}/reminder` |
+| Admin | lab.db, trials, saved results | Trials table, YouCam usage per key (result files × 14 units, units granted set by hand), users, access log, settings | `app/admin.py` (`/api/admin/…`), `web/src/features/account/AdminPage.tsx` |
 | Judge demo | Timeline, receipt, badge without photo links, notes or key names | Read-only site at `/demo/`, data live from `/demo/data/` (public) | `app/demo.py`, `npm run build:demo` → `web/dist-demo/`; `scripts/export_demo.py` for a static host |
 
 **Access:** `/api` and `/files` answer this PC freely; the app shell and `/demo/` (no faces) are
@@ -122,9 +127,25 @@ comes from `LAB_TOKEN` in `.env`, else is generated once into `.lab_token` (git-
 - Wi-Fi: Vite's proxy forwards the real client address (`xfwd`); the API trusts only the last entry.
 - Tunnel: `cloudflared` connects from localhost, so any request with `Cf-Connecting-IP` counts as
   remote. Cloudflare Access (team emails only) is the outer lock, the token the inner one.
+- Sign-in (Oct 11, `app/auth.py`): a session cookie also opens `/api` and `/files` for another
+  device. Invite-only (`ADMIN_EMAILS` or added on the admin page); Google, GitHub and LinkedIn
+  OAuth (verified email only), a one-time email link (Resend, `app/mail.py`; 15 minutes, one use,
+  a press on "Sign in" uses it, one a minute per address, 30 an hour in all), or username/email +
+  password (scrypt). The cookie holds a random
+  token, `lab.db` only its SHA-256; HttpOnly, SameSite=Lax, Secure on https, 30 days. Sign-in and
+  admin changes need a same-site `Origin`; 5 wrong passwords per account (10 per address) in
+  15 minutes block further tries. Admin → Settings → Who gets in: "Lab link or sign-in"
+  (default; this PC free) or "Sign-in only" (every device signs in, this PC too; lab links stop
+  working; `python -m app.users allow-links` undoes it). A locked device opens on the sign-in page
+  (`/login?next=…`), which also takes a pasted lab link while links are allowed and, on a computer,
+  shows a QR code of the sign-in address (`PUBLIC_URL`, never the token; the token QR stays on Today). The admin API
+  always needs an admin session, from this PC too.
+- Access log (`lab.db`): sign-ins and failures, sign-outs, lab links used, admin changes, and a
+  device opening the lab (once an hour per person and device), with address and device name.
 - The app sends the token to `POST /api/unlock` (open path), which checks it and sets the cookie
-  itself (HttpOnly, SameSite=Lax; phone browsers didn't keep a script-set cookie). The lock screen
-  says why (no token vs wrong token) and accepts a pasted lab link.
+  itself (HttpOnly, SameSite=Lax; phone browsers didn't keep a script-set cookie). The sign-in page
+  accepts a pasted lab link while lab links are allowed. Lab links are `/capture?token=…`; old ones
+  (`/?token=…#/capture`) still work.
 - `/api` and `/files` responses carry `Cache-Control: private, no-store`, so Cloudflare never
   caches faces or scores.
 - Other devices only get background-free copies (`_mask/`); originals answer 403 off the PC.

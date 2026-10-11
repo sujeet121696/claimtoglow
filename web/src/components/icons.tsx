@@ -1,4 +1,4 @@
-// Line icons for the navigation (24×24, stroke = currentColor, so they follow the text colour).
+// Line icons for the navigation and the account menu (24×24, stroke = currentColor, so they follow the text colour).
 import type { Page } from "../app/router";
 
 const PATHS: Record<Page, string> = {
@@ -8,6 +8,8 @@ const PATHS: Record<Page, string> = {
   results: "M5 20V11M10 20V5M15 20v-6M20 20V9",
   timeline: "M3 17l5-5 4 3 8-8M15 7h5v5",
   receipt: "M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3",
+  login: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0",
+  admin: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4",
 };
 
 export function PageIcon({ page }: { page: Page }) {

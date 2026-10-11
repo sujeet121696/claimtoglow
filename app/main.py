@@ -2,12 +2,12 @@
 
 Run: .venv/Scripts/python -m uvicorn app.main:app --port 8000
 Photos stay on this machine. The server listens on localhost only; other devices reach it through
-the Vite proxy (Wi-Fi) or a Cloudflare Tunnel, and need the lab token (see lock_remote_devices).
+the Vite proxy (Wi-Fi) or a Cloudflare Tunnel, and need the lab token or a sign-in (see lock_remote_devices).
 """
 
 import hashlib
-import ipaddress
 import json
+import time
 import re
 import secrets
 import socket
@@ -18,13 +18,18 @@ from typing import Literal
 from fastapi import Body, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from pydantic import BaseModel, Field
 
+from .admin import router as admin_router
 from .analyzer import DEFAULT_ACTIONS, analyze_cached, cached_scores, mirror_halves, photo_files, result_dir
+from .auth import current_user, remote_access, router as auth_router
 from .claim import parse_claim
 from .config import NAME_RE, PHOTOS, WEB_DEMO, WEB_DIST, key_var_for, lab_token, person_of, public_url
+from .db import log_access
 from .llm import LLMError
 from .masking import MASK_DIR, blanked_path, save_mask
+from .net import client_ip, device, is_https, is_local
 from .noise import noise_rows, split_pairs
 from .demo import demo_people, demo_timeline
 from .receipt import badge_svg, receipt, timeline
@@ -39,8 +44,12 @@ PHOTOS.mkdir(exist_ok=True)
 LAB_PORT = 5173  # where Vite serves the lab (npm run dev / dev:phone)
 
 
+app.include_router(auth_router)
+app.include_router(admin_router)
+
 PRIVATE_PATHS = ("/api/", "/files/")  # the app shell is public; data and photos are not
-OPEN_PATHS = ("/api/unlock",)  # how a locked device gets the token cookie
+# How a locked device gets in: the token cookie (unlock) or a sign-in (/api/me, /api/auth/…).
+OPEN_PATHS = ("/api/unlock", "/api/me")
 TOKEN_COOKIE = "lab_token"
 
 
@@ -48,45 +57,51 @@ def token_ok(token: str) -> bool:
     return secrets.compare_digest(token.encode(), lab_token().encode())
 
 
-def client_ip(request: Request) -> str:
-    """The real client: Vite's proxy and Cloudflare both append it as the last X-Forwarded-For entry."""
-    forwarded = request.headers.get("x-forwarded-for")
-    return forwarded.split(",")[-1].strip() if forwarded else (request.client.host if request.client else "")
-
-
-def is_local(request: Request) -> bool:
-    """A request from this PC. Tunnel traffic also reaches us from localhost (cloudflared), so
-    anything carrying Cloudflare's Cf-Connecting-IP header is remote, whatever its address."""
-    if "cf-connecting-ip" in request.headers:
-        return False
-    try:
-        return ipaddress.ip_address(client_ip(request).removeprefix("::ffff:")).is_loopback
-    except ValueError:
-        return False
-
-
 @app.middleware("http")
 async def lock_remote_devices(request: Request, call_next):
-    """Photos are faces and analyses cost units: any device other than this PC (phone on Wi-Fi,
-    or a teammate through the tunnel) needs the lab token, which it gets once from the lab link."""
-    private = request.url.path.startswith(PRIVATE_PATHS)
-    if private and request.url.path not in OPEN_PATHS and not is_local(request):
-        if request.url.path.startswith("/files/photos/") and f"/{MASK_DIR}/" not in request.url.path:
+    """Photos are faces and analyses cost units. Who gets in depends on Admin → Settings → Who
+    gets in: "Lab link or sign-in" lets this PC in freely and other devices with the lab token or a
+    sign-in; "Sign-in only" asks every device for a sign-in, this PC too. Original photos never go to
+    another device. The admin API also checks for an admin (admin.py)."""
+    path = request.url.path
+    private = path.startswith(PRIVATE_PATHS)
+    if private and path not in OPEN_PATHS and not path.startswith("/api/auth/"):
+        local = is_local(request)
+        if not local and path.startswith("/files/photos/") and f"/{MASK_DIR}/" not in path:
             return JSONResponse({"detail": "Other devices only get photos with the background removed."},
                                 status_code=403, headers={"Cache-Control": "private, no-store"})
-        token = request.cookies.get(TOKEN_COOKIE, "")
-        if not token_ok(token):
-            reason = "has an old or wrong lab link" if token else "hasn't opened the lab link yet"
-            return JSONResponse(
-                {"detail": f"Locked: this device {reason}. On the PC open Today → “Open on phone”, then scan the code or open the copied link."},
-                status_code=401, headers={"Cache-Control": "private, no-store"},
-            )
+        link_allowed = remote_access() == "link_or_signin"
+        if not (local and link_allowed):
+            user = current_user(request)
+            token = request.cookies.get(TOKEN_COOKIE, "")
+            if not user and not (link_allowed and token_ok(token)):
+                reason = ("needs a sign-in" if not link_allowed
+                          else "has an old or wrong lab link" if token else "hasn't opened the lab link or signed in yet")
+                return JSONResponse({"detail": f"Locked: this device {reason}."},
+                                    status_code=401, headers={"Cache-Control": "private, no-store"})
+            if path == "/api/people" and not local:  # the lab loading: note who opened it
+                note_visit(request, user)
     response = await call_next(request)
     if private:
         response.headers["Cache-Control"] = "private, no-store"  # Cloudflare and browsers never keep faces or scores
     elif request.url.path.startswith("/demo/data/"):
         response.headers["Cache-Control"] = "no-store"  # live demo data: Cloudflare and browsers never keep a stale copy
     return response
+
+
+_visits = {}
+VISIT_EVERY_SECONDS = 3600
+
+
+def note_visit(request: Request, user: dict | None) -> None:
+    """Access log: a device opening the lab, at most once an hour per person and device. Cloudflare
+    Access's verified email is noted when there is no sign-in (only for the log)."""
+    who = user["email"] if user else request.headers.get("cf-access-authenticated-user-email")
+    method = "session" if user else "lab link"
+    key = (who, method, client_ip(request), device(request))
+    if time.monotonic() - _visits.get(key, -VISIT_EVERY_SECONDS) >= VISIT_EVERY_SECONDS:
+        _visits[key] = time.monotonic()
+        log_access("lab-open", email=who, method=method, ip=key[2], device=key[3])
 
 
 _clients = {}
@@ -288,11 +303,16 @@ class Unlock(BaseModel):
 def unlock(body: Unlock, request: Request):
     """Turns the token from a lab link into a cookie set by the server: phone browsers keep it more
     reliably than one set by page script, and HttpOnly keeps it away from scripts."""
-    if not token_ok(body.token):
+    valid, allowed = token_ok(body.token), remote_access() == "link_or_signin"
+    log_access("unlock", method="lab link", ip=client_ip(request), device=device(request), ok=valid and allowed,
+               email=request.headers.get("cf-access-authenticated-user-email"),
+               detail=None if valid and allowed else "wrong or old link" if not valid else "lab links are off")
+    if not valid:
         raise HTTPException(403, "This lab link is old or wrong. Copy it again from “Open on phone” on the PC.")
+    if not allowed:
+        raise HTTPException(403, "Lab links are turned off. Sign in with your account instead.")
     response = JSONResponse({"unlocked": True})
-    https = request.headers.get("x-forwarded-proto", request.url.scheme) == "https"
-    response.set_cookie(TOKEN_COOKIE, body.token, max_age=365 * 24 * 3600, httponly=True, secure=https, samesite="lax")
+    response.set_cookie(TOKEN_COOKIE, body.token, max_age=365 * 24 * 3600, httponly=True, secure=is_https(request), samesite="lax")
     return response
 
 
@@ -306,7 +326,7 @@ def lab_link():
             ip = s.getsockname()[0]
         except OSError:
             ip = "127.0.0.1"
-    unlock = f"/?token={lab_token()}#/capture"
+    unlock = f"/capture?token={lab_token()}"
     public = public_url()
     return {"wifi": f"https://{ip}:{LAB_PORT}{unlock}", "public": f"{public}{unlock}" if public else None}
 
@@ -425,7 +445,21 @@ def demo_person_data(person: str, file: Literal["timeline.json", "receipt.json",
 if WEB_DEMO.is_dir():
     app.mount("/demo", StaticFiles(directory=WEB_DEMO, html=True), name="demo")
 
+class AppFiles(StaticFiles):
+    """The built app. A page address without a file (/today, /login?code=…) gets index.html, so
+    clean links and reloads work; anything under /api, /files or /demo stays a plain 404."""
+
+    async def get_response(self, path: str, scope):
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as e:
+            parts = path.replace("\\", "/").split("/")  # the OS separator: a backslash on Windows
+            if e.status_code != 404 or "." in parts[-1] or parts[0] in ("api", "files", "demo"):
+                raise
+            return await super().get_response("index.html", scope)
+
+
 # The built web app (npm run build), so one server on one port can sit behind the tunnel.
 # Mounted last: every /api, /files and /demo route above wins.
 if WEB_DIST.is_dir():
-    app.mount("/", StaticFiles(directory=WEB_DIST, html=True), name="web")
+    app.mount("/", AppFiles(directory=WEB_DIST, html=True), name="web")

@@ -2,15 +2,15 @@
 // by default, 7 AM in one tap, or any time. Each phone gets its own calendar's button: an iPhone the
 // .ics file (Apple Calendar), Android the Google Calendar link (its app can't open .ics); a computer
 // gets both. The other one stays as a small link for people who use a different calendar.
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "../../api/client";
 import type { Person } from "../../api/types";
 import { useStore } from "../../app/store";
+import { clock } from "../../lib/time";
 import { Segmented } from "../../components/ui";
 import { day0Time, firstReminder, googleLink, icsFile } from "./calendar";
 
 const when = (d: Date) => d.toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
-const clock = (t: string) => { const [h, m] = t.split(":").map(Number); return new Date(2000, 0, 1, h, m).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }); };
 // iPads report themselves as a Mac, but with a touch screen.
 const DEVICE: "ios" | "android" | "other" =
   /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) ? "ios"
@@ -18,15 +18,12 @@ const DEVICE: "ios" | "android" | "other" =
 const PRESETS = [{ value: "07:00", label: "Morning 7 AM" }, { value: "19:00", label: "Evening 7 PM" }];
 
 export function Reminder({ person: p }: { person: Person }) {
-  const { refresh } = useStore();
+  const { refresh, me } = useStore();
   const [time, setTime] = useState(p.reminder_time ?? "19:00");
   // Remember the time on the server (trial.json), so every device shows when this person's reminder rings.
   const remember = () => { if (time !== p.reminder_time) api.saveReminder(p.person, time).then(refresh).catch(() => {}); };
-  // The phone-reachable address (the tunnel), without the lab token; else this page's address.
-  const [origin, setOrigin] = useState(location.origin);
-  useEffect(() => {
-    api.labLink().then((l) => { if (l.public) setOrigin(new URL(l.public).origin); }).catch(() => {});
-  }, []);
+  // The phone-reachable address (the tunnel, PUBLIC_URL), else this page's; links never carry the lab token.
+  const origin = me?.public_url ?? location.origin;
 
   const google = time ? googleLink(p, time, origin) : null;
   const first = time ? firstReminder(p, time) : null;
