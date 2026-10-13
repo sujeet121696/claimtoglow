@@ -1,20 +1,81 @@
-/* Receipt: facts, fingerprints and the badge. Prints as a plain document. */
-.receipt { display: grid; gap: var(--space-4); }
+/* Receipt: a paper slip (claim, verdict, concerns, test, fingerprint), then the evidence and the
+   badge. Narrow like a real receipt, so it reads top to bottom; prints as a plain document. */
+.receipt-page { display: grid; gap: var(--space-4); max-width: 760px; width: 100%; margin: 0 auto; }
+
+.slip { display: grid; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.slip > * { padding: var(--space-4) var(--space-6); }
+.slip > * + * { border-top: 1px dashed var(--border-strong); }
+.slip h3 { margin: 0 0 var(--space-3); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+.slip-head { text-align: center; }
+.slip-kicker { margin: 0 0 var(--space-2); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.slip-head h2 { margin: 0; font-family: var(--font-display); font-size: 24px; letter-spacing: -0.01em; }
+.slip-head blockquote { margin: var(--space-2) auto 0; max-width: 60ch; color: var(--muted); font-size: 14px; line-height: 1.5; }
+
+/* The verdict: the day ring beside a stamp-like headline in the verdict's colour. */
+.slip-verdict { display: flex; align-items: center; gap: var(--space-4); }
+.slip-verdict p { margin: 0; }
+.slip-verdict .day-ring { flex: none; width: 64px; height: 64px; }
+.stamp { display: inline-block; margin-bottom: var(--space-1) !important; padding: 2px 12px; border: 2px solid currentColor; border-radius: var(--radius-sm); font-family: var(--font-display); font-size: 20px; font-weight: 800; letter-spacing: 0.01em; }
+.slip-verdict.pass .stamp { color: var(--pass); background: var(--pass-bg); }
+.slip-verdict.fail .stamp { color: var(--fail); background: var(--fail-bg); }
+.slip-verdict.neutral .stamp { color: var(--muted); background: var(--note-bg); }
+
+/* One line per concern: name, noise bar, result; the numbers underneath. */
+.lines { list-style: none; margin: 0 0 var(--space-3); padding: 0; }
+.lines li { display: grid; grid-template-columns: 110px 1fr auto; align-items: center; gap: 4px var(--space-3); padding: var(--space-2) 0; }
+.lines li + li { border-top: 1px solid var(--border); }
+.line-name { font-weight: 600; text-transform: capitalize; }
+.line-note { grid-column: 2 / -1; }
+.line-numbers { grid-column: 2 / -1; font-variant-numeric: tabular-nums; }
+.lines .change { padding: 1px 8px; border-radius: 99px; font-size: 13px; white-space: nowrap; }
+.lines .change.better { background: var(--up); color: var(--pass); font-weight: 700; }
+.lines .change.worse { background: var(--down); color: var(--fail); font-weight: 700; }
+.lines .change.steady, .lines .change.unknown { color: var(--muted); }
+
+.noise-bar { position: relative; height: 18px; }
+.noise-bar::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--border-strong); }
+.noise-bar .band { position: absolute; top: 3px; bottom: 3px; border-radius: 4px; background: color-mix(in srgb, var(--muted) 22%, transparent); }
+.noise-bar .zero { position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1px solid var(--muted); }
+.noise-bar .dot { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--muted); }
+.noise-bar .dot.better { background: var(--pass); }
+.noise-bar .dot.worse { background: var(--fail); }
+
 .facts { display: grid; gap: var(--space-2); margin: 0; }
-.facts div { display: grid; grid-template-columns: 160px 1fr; gap: var(--space-3); }
+.facts div { display: grid; grid-template-columns: 110px 1fr; gap: var(--space-3); }
 .facts dt { color: var(--muted); font-weight: 600; font-size: 13px; }
 .facts dd { margin: 0; }
-.hash { overflow-wrap: anywhere; margin: 0 0 var(--space-2); }
-.photo-hashes td.mono { white-space: normal; overflow-wrap: anywhere; min-width: 280px; text-align: left; font-size: 12px; }
-.repeat-photos { margin-top: var(--space-3); }
-.repeat-photos summary { cursor: pointer; color: var(--muted); }
+
+.slip-foot { display: grid; gap: var(--space-1); text-align: center; }
+.slip-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.hash { overflow-wrap: anywhere; font-size: 13px; }
+
+/* Evidence */
+.check-steps { margin: 0 0 var(--space-3); padding-left: 20px; display: grid; gap: 4px; }
+.check-steps code { overflow-wrap: anywhere; }
+.evidence { border-top: 1px solid var(--border); padding: var(--space-2) 0; }
+.evidence summary { cursor: pointer; font-weight: 600; }
+.evidence[open] summary { margin-bottom: var(--space-2); }
+.evidence p { margin: 0; }
+.photo-hashes { width: 100%; }
+.photo-hashes th, .photo-hashes td { text-align: left; }
+.photo-hashes td.mono { white-space: normal; overflow-wrap: anywhere; min-width: 260px; font-size: 11px; }
 .snippet { display: block; width: 100%; margin: var(--space-3) 0 var(--space-2); font-size: 12px; }
 
 @media (max-width: 640px) {
+  .slip > * { padding: var(--space-4); }
+  .lines li { grid-template-columns: 1fr auto; }
+  .noise-bar { grid-column: 1 / -1; grid-row: 2; }
+  .line-note { grid-column: 1 / -1; }
+  .line-numbers { grid-column: 1 / -1; }
   .facts div { grid-template-columns: 1fr; gap: 0; }
 }
 
 @media print {
-  .topbar, .page-actions, .no-print { display: none; }
-  .card { box-shadow: none; break-inside: avoid; }
+  .topbar, .main-nav, .footer, .page-actions, .no-print { display: none !important; }
+  .receipt-page { max-width: none; }
+  .clamp-text { display: block; }
+  .clamp button { display: none; }
+  .slip, .card { box-shadow: none; break-inside: avoid; }
+  .slip-verdict .stamp, .noise-bar .band, .lines .change { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

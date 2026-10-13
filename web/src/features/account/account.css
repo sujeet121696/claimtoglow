@@ -5,11 +5,21 @@
 .account-button { display: inline-grid; place-items: center; flex: none; width: 34px; height: 34px; min-height: 34px; padding: 0; border-radius: 50%; font-weight: 700; background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
 .account-button.signed-out { background: var(--surface); color: var(--text); border-color: var(--border-strong); }
 .account-button .icon { width: 18px; height: 18px; }
-.account-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 35; min-width: 200px; display: grid; gap: 2px; padding: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); box-shadow: 0 6px 18px rgb(0 0 0 / 0.14); }
-.account-menu a, .account-menu .link-button { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: var(--radius-sm); color: var(--text); text-decoration: none; text-align: left; font: inherit; }
-.account-menu a:hover, .account-menu .link-button:hover { background: var(--bg); }
-.account-menu .icon { width: 18px; height: 18px; }
-.account-who { display: grid; padding: 6px 8px 8px; border-bottom: 1px solid var(--border); margin-bottom: 4px; overflow-wrap: anywhere; }
+.account-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 35; width: 264px; max-width: calc(100vw - 32px); display: grid; padding: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: 0 10px 28px rgb(0 0 0 / 0.16); }
+.account-menu > * { padding: var(--space-1) 0; }
+.account-menu > * + * { border-top: 1px solid var(--border); }
+.account-who { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-3); overflow-wrap: anywhere; }
+.account-who > div { display: grid; gap: 2px; min-width: 0; }
+.account-who .badge { justify-self: start; margin-top: 2px; }
+.account-who.signed-out { display: grid; gap: var(--space-1); }
+.account-who.signed-out .button { justify-content: center; margin-top: var(--space-2); }
+.account-avatar { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-weight: 700; font-size: 17px; }
+.account-item { display: flex; align-items: center; gap: var(--space-2); width: 100%; padding: 10px var(--space-2); border: none; border-radius: var(--radius-sm); background: none; color: var(--text); text-decoration: none; font: inherit; text-align: left; }
+.account-item:hover, .account-item:hover:not(:disabled) { background: var(--bg); border-color: transparent; }
+.account-item .icon { width: 18px; height: 18px; color: var(--muted); }
+.account-theme { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-2); }
+.account-theme .theme-switch { width: 100%; }
+.theme-switch.labelled button { flex: 1; justify-content: center; gap: 6px; font-size: 13px; }
 
 /* Sign-in page. */
 .login-card { width: 100%; max-width: 420px; margin: var(--space-4) auto; display: grid; gap: var(--space-3); }

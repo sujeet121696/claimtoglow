@@ -35,25 +35,24 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #14161a;
-    --surface: #1a1d22;
-    --note-bg: #211f2b;
-    --text: #e6e8eb;
-    --muted: #9aa2ad;
-    --border: #2b2f36;
-    --border-strong: #3a404a;
-    --accent: #00b0ff;
-    --accent-text: #14161a;
-    --link: #00b0ff;
-    --pass: #00c853;
-    --pass-bg: #133a24;
-    --fail: #ef6b5b;
-    --fail-bg: #45231f;
-    --up: #133a24;
-    --down: #45231f;
-    --shadow: none;
-    color-scheme: dark;
-  }
+/* Dark: set on <html> from the System / Light / Dark switch (lib/theme.ts, index.html). */
+:root[data-theme="dark"] {
+  --bg: #14161a;
+  --surface: #1a1d22;
+  --note-bg: #211f2b;
+  --text: #e6e8eb;
+  --muted: #9aa2ad;
+  --border: #2b2f36;
+  --border-strong: #3a404a;
+  --accent: #00b0ff;
+  --accent-text: #14161a;
+  --link: #00b0ff;
+  --pass: #00c853;
+  --pass-bg: #133a24;
+  --fail: #ef6b5b;
+  --fail-bg: #45231f;
+  --up: #133a24;
+  --down: #45231f;
+  --shadow: none;
+  color-scheme: dark;
 }

@@ -37,19 +37,6 @@
   .person-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgb(10 37 64 / 0.08); }
 }
 
-.day-ring .ring-track { fill: var(--surface); stroke: var(--border); stroke-width: 5; }
-.day-ring .ring-fill {
-  fill: none; stroke: var(--brand-green); stroke-width: 5; stroke-linecap: round;
-  transform: rotate(-90deg); transform-origin: 28px 28px;
-  stroke-dashoffset: var(--ring-offset);
-  animation: ring-fill 0.9s ease-out;
-}
-@keyframes ring-fill { from { stroke-dashoffset: var(--ring-length); } }
-.day-ring .ring-tick { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1.4; }
-.day-ring .ring-tick.reached { fill: var(--accent); stroke: var(--accent); }
-.day-ring .ring-day { font: 800 16px var(--font-display); fill: var(--text); }
-.day-ring .ring-of { font: 600 8px var(--font-body); fill: var(--muted); }
-
 .next-checkpoint { margin: 0; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--surface); border: 1px dashed var(--border-strong); color: var(--muted); }
 
 /* Task ticks as small round badges. */

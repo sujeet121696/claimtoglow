@@ -15,6 +15,9 @@
 .segmented button { flex: none; border: none; border-radius: 0; padding: 6px 12px; }
 .segmented button + button { border-left: 1px solid var(--border); }
 .segmented button.on { background: var(--accent); color: var(--accent-text); }
+.theme-switch button { display: inline-flex; padding: 6px 10px; color: var(--muted); }
+.theme-switch .icon { width: 18px; height: 18px; }
+.theme-switch button[aria-pressed="true"] { background: color-mix(in srgb, var(--link) 14%, var(--surface)); color: var(--text); }
 .seg-count { font-size: 11px; opacity: 0.75; margin-left: 4px; }
 
 .field { display: grid; gap: 4px; }
@@ -46,3 +49,17 @@
 @media (max-width: 640px) {
   .table-wrap th:first-child, .table-wrap td:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
 }
+
+/* Day ring (components/DayRing.tsx): Today cards and the receipt. */
+.day-ring .ring-track { fill: var(--surface); stroke: var(--border); stroke-width: 5; }
+.day-ring .ring-fill {
+  fill: none; stroke: var(--brand-green); stroke-width: 5; stroke-linecap: round;
+  transform: rotate(-90deg); transform-origin: 28px 28px;
+  stroke-dashoffset: var(--ring-offset);
+  animation: ring-fill 0.9s ease-out;
+}
+@keyframes ring-fill { from { stroke-dashoffset: var(--ring-length); } }
+.day-ring .ring-tick { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1.4; }
+.day-ring .ring-tick.reached { fill: var(--accent); stroke: var(--accent); }
+.day-ring .ring-day { font: 800 16px var(--font-display); fill: var(--text); }
+.day-ring .ring-of { font: 600 8px var(--font-body); fill: var(--muted); }

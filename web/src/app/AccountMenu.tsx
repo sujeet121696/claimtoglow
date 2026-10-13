@@ -1,10 +1,12 @@
-// Top-bar account control: "Sign in" when signed out; when signed in, a round initial that opens a
-// small menu with the account, the admin page (admins only) and Sign out.
+// Top-bar account control: a round button (the initial when signed in, a person icon when not)
+// that opens a small panel: who is signed in and their role (or a Sign in button), the admin page
+// (admins only), Appearance (Auto / Light / Dark) and Sign out.
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api/client";
-import { PageIcon } from "../components/icons";
+import { LineIcon, PageIcon } from "../components/icons";
 import "../features/account/account.css";
 import { currentPage, href } from "./router";
+import { ThemeSwitch } from "./ThemeSwitch";
 import { useStore } from "./store";
 
 export function AccountMenu() {
@@ -23,37 +25,58 @@ export function AccountMenu() {
   }, [open]);
 
   if (!me) return null;
-  if (!me.user) {
-    return (
-      <a className="button account-button signed-out" href={href("login", { next: currentPage() })} aria-label="Sign in" title="Sign in">
-        <PageIcon page="login" />
-      </a>
-    );
-  }
-
   const u = me.user;
-  const label = u.name || u.username || u.email;
-  const signOut = () => { setOpen(false); api.logout().catch(() => {}).finally(refresh); };
+  const label = u ? u.name || u.username || u.email : "";
+  const initial = label.slice(0, 1).toUpperCase();
+  const close = () => setOpen(false);
+  const signOut = () => { close(); api.logout().catch(() => {}).finally(refresh); };
 
   return (
     <div className="account" ref={ref}>
-      <button className="account-button" aria-haspopup="menu" aria-expanded={open} aria-label={`Account: ${label}`} onClick={() => setOpen(!open)}>
-        {label.slice(0, 1).toUpperCase()}
+      <button className={u ? "account-button" : "account-button signed-out"} aria-expanded={open} aria-controls="account-menu"
+        aria-label={u ? `Account: ${label}` : "Account"} title={u ? label : "Account"} onClick={() => setOpen(!open)}>
+        {u ? initial : <PageIcon page="login" />}
       </button>
       {open && (
-        <div className="account-menu" role="menu">
-          <div className="account-who">
-            <b>{label}</b>
-            {label !== u.email && <span className="muted small">{u.email}</span>}
-          </div>
-          {u.admin && (
-            <a role="menuitem" href={href("admin")} onClick={() => setOpen(false)}>
-              <PageIcon page="admin" /> Admin
-            </a>
+        <div className="account-menu" id="account-menu">{/* sections, with a line between each */}
+          {u ? (
+            <div className="account-who">
+              <span className="account-avatar" aria-hidden="true">{initial}</span>
+              <div>
+                <b>{label}</b>
+                {label !== u.email && <span className="muted small">{u.email}</span>}
+                <span className={u.admin ? "badge pass" : "badge neutral"}>{u.admin ? "Admin" : "Member"}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="account-who signed-out">
+              <b>Not signed in</b>
+              <span className="muted small">Sign in to open the lab from any device.</span>
+              <a className="button primary" href={href("login", { next: currentPage() })} onClick={close}>Sign in</a>
+            </div>
           )}
-          <button role="menuitem" className="link-button" onClick={signOut}>Sign out</button>
+          {u?.admin && (
+            <div>
+              <a className="account-item" href={href("admin")} onClick={close}>
+                <PageIcon page="admin" /> Admin page
+              </a>
+            </div>
+          )}
+          <div className="account-theme">
+            <span className="small muted">Appearance</span>
+            <ThemeSwitch labels />
+          </div>
+          {u && (
+            <div>
+              <button className="account-item" onClick={signOut}>
+                <LineIcon d={SIGN_OUT} /> Sign out
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
+
+const SIGN_OUT = "M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10";
