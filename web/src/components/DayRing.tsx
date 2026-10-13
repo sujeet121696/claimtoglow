@@ -1,5 +1,5 @@
 // Trial progress as a ring: the day in the middle, a tick at each checkpoint (day 7, 14, … and the
-// last day). The arc fills in on load (today.css).
+// last day). The arc fills in on load (styles/components.css). Used on Today and the receipt.
 const R = 22, C = 2 * Math.PI * R;
 
 export function DayRing({ day, duration }: { day: number | null; duration: number }) {

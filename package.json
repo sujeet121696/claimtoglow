@@ -1,0 +1,9 @@
+{
+  "name": "claimtoglow",
+  "private": true,
+  "description": "Repo-level commands. The web app has its own package.json in web/.",
+  "scripts": {
+    "local": "node scripts/local.mjs",
+    "local:tunnel": "node scripts/local.mjs --tunnel"
+  }
+}

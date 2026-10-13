@@ -17,6 +17,7 @@ import { InstallButton } from "./InstallButton";
 import { DEMO } from "./mode";
 import { currentPage, HOME, href, NAV, navigate, PAGES, useRoute, type Page } from "./router";
 import { StoreProvider, useStore } from "./store";
+import { ThemeSwitch } from "./ThemeSwitch";
 
 const VIEWS: Record<Page, ComponentType> = {
   today: TodayPage,
@@ -71,9 +72,13 @@ function Shell() {
         {locked && !standalone ? null : needsPerson ? <Empty>{DEMO ? "Loading the trial data…" : "Add a person on the Today page first."}</Empty> : <View />}
       </main>
 
+      {/* The demo has no account menu, so its theme switch sits in the footer. */}
       <footer className="footer muted small">
-        Cosmetic skin metrics only, not a diagnosis.{" "}
-        {DEMO ? "Read-only demo with the real trial data; photos are not included, only their fingerprints." : "Photos stay on this machine."}
+        <p>
+          Cosmetic skin metrics only, not a diagnosis.{" "}
+          {DEMO ? "Read-only demo with the real trial data; photos are not included, only their fingerprints." : "Photos stay on this machine."}
+        </p>
+        {DEMO && <ThemeSwitch />}
       </footer>
 
       {editing && <PersonEditor key={editing === "new" ? "new" : editing.person} />}

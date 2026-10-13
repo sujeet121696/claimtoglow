@@ -185,6 +185,20 @@ day-00. Daily single photos are still taken and kept.
         scrypt, urllib); lab.db git-ignored. Lab links keep working, so the trial isn't affected.
         Keys copied from kharidwise (.env). To do (you): add the claimtoglow callback URL to the Google
         client and LinkedIn app, a new GitHub OAuth app, then restart (README: Sign-in)
+23d. [x] Theme switch (Oct 12): System / Light / Dark in the account menu (the demo: in the footer),
+        saved per browser, applied before the first paint (index.html) so dark never flashes light
+23e. [x] Receipt redesign (Oct 12): verdict first, noise-band bar per concern, "Check it yourself" steps
+        (certutil / shasum) with the hashes; Results photo cards show optional checks as grey advice, not red
+
+23f. [x] Noise between days (Oct 13): days 0–5 showed T − C moving 1.1–10× more from day to day than
+        within one sitting (Sujeet's texture: +2, +3, −2, −22, +21, +28 vs repeat SD 1.5), so the old floor
+        would have called noise a result. The verdict now adds the between-day SD from successive daily
+        photos: floor = 2·√(SDw²·(1/k + 1/k0) + 2·SDb²), needs ≥ 4 analysed days. Bands today: Sujeet
+        radiance 14, texture 42, moisture 13; Sahni 8, 11, 16; Suvaani dark circles 15. Also seen:
+        Sujeet's photo time drifted 16:08–21:56 IST; keep every photo near day 0's time
+
+23g. [x] `npm run local` (Oct 13): one command to set up, clean, test, type-check, build both apps and
+        serve on :8000; `npm run local:tunnel` adds the Cloudflare tunnel
 
 ## Oct 21 – 29 · Submit early → M5, M6
 19. [ ] Analyse the day-14 checkpoint (Oct 21), then the final day-21 checkpoint (Oct 28)

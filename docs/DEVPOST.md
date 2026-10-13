@@ -31,18 +31,22 @@ Claim to Glow takes the claim on the box and runs a small, fair trial:
    distance, even light, face straight. A ghost of day 0 helps line it up.
 4. **Measure.** YouCam Skin Analysis scores each half-face (`raw_score`).
 5. **Filter noise.** Before the trial, repeat photos in one sitting measure how much the score moves
-   when nothing changed.
+   when nothing changed. The daily photos measure how much more it moves from one day to the next.
 6. **Verdict.** **Claim met**, **claim not met**, or **not enough evidence**.
 
 For each claimed concern, with T − C the treated half minus the control half:
 
 ```
 effect = mean(T − C at the checkpoint) − mean(T − C at baseline)
-floor  = 2 × SD × √(1/k + 1/k0)
+floor  = 2 × √(SDw² × (1/k + 1/k0) + 2 × SDb²)
 ```
 
-SD is the spread of T − C over the repeat photos; k and k0 are the photos at the checkpoint and at
-baseline (day 0 plus the repeat photos). A change counts only when |effect| > floor.
+SDw is the spread of T − C over the repeat photos in one sitting; k and k0 are the photos at the
+checkpoint and at baseline (day 0 plus the repeat photos). SDb is the extra noise between days
+(light, time of day), from successive daily photos; more photos on the same day can't average it
+away, so the checkpoint and the baseline each carry it once. A change counts only when
+|effect| > floor. We added SDb after the first week: the day-to-day spread was up to 10× the
+within-sitting spread, so the first formula would have called noise a result.
 
 ## How we built it
 - **YouCam Skin Analysis API** is the measuring instrument. Each photo is split into two mirrored

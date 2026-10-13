@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Photo } from "../../api/types";
 import { Badge } from "../../components/ui";
 
-/** Thumbnails with fingerprint, gate result, analysis status and a Retake action. */
+/** Thumbnails with the gate result, analysis status and a Retake action. */
 export function PhotoStrip({ photos, errors, onRetake }: {
   photos: Photo[];
   errors: Record<string, string>;
@@ -15,7 +15,9 @@ export function PhotoStrip({ photos, errors, onRetake }: {
     <div className="photo-strip">
       {photos.map((p) => {
         const gate = p.meta.gate;
-        const failed = gate?.checks.filter((c) => !c.pass).map((c) => c.label) ?? [];
+        const missed = gate?.checks.filter((c) => !c.pass) ?? [];
+        const failed = missed.filter((c) => !c.optional).map((c) => c.label); // these blocked the photo
+        const advice = missed.filter((c) => c.optional); // these only advise, so they aren't shown as errors
         // The image shown here is the one this device may load; the download is named <set>-<file>.
         const src = p.masked_url ?? p.url;
         const fileName = `${p.url.split("/")[3]}-${src.split("/").pop()}`;
@@ -29,10 +31,10 @@ export function PhotoStrip({ photos, errors, onRetake }: {
                 <b>{p.stem}</b>
                 {gate ? <Badge tone={gate.passed ? "pass" : "fail"}>{gate.passed ? "passed" : "failed"}</Badge> : <Badge tone="neutral">checking</Badge>}
               </div>
-              <span className="mono small muted" title={`SHA-256 ${p.sha256}`}>{p.sha256.slice(0, 10)}</span>
               {p.tampered && <span title="This file no longer matches the fingerprint saved when it was taken. Retake it."><Badge tone="fail">file changed</Badge></span>}
               <span className="small muted">whole {p.scores ? "✓" : "–"} · split {p.split ? "✓" : "–"}</span>
               {failed.length > 0 && <span className="small fail">{failed.join(", ")}</span>}
+              {advice.map((c) => <span key={c.id} className="small muted" title={c.hint}>{c.label}: {c.value}</span>)}
               <span className="photo-links small">
                 <a href={src} target="_blank" rel="noopener">View</a>
                 <a href={src} download={fileName}>Download</a>

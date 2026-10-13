@@ -1,4 +1,4 @@
-// Line icons for the navigation and the account menu (24×24, stroke = currentColor, so they follow the text colour).
+// Line icons for the navigation, the account menu and the theme switch (24×24, stroke = currentColor, so they follow the text colour).
 import type { Page } from "../app/router";
 
 const PATHS: Record<Page, string> = {
@@ -12,11 +12,15 @@ const PATHS: Record<Page, string> = {
   admin: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4",
 };
 
-export function PageIcon({ page }: { page: Page }) {
+/** A 24×24 line icon; `filled` paths are solid (the dark half of the theme icon). */
+export function LineIcon({ d, filled }: { d: string; filled?: string }) {
   return (
     <svg className="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
       strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d={PATHS[page]} />
+      <path d={d} />
+      {filled && <path d={filled} fill="currentColor" />}
     </svg>
   );
 }
+
+export const PageIcon = ({ page }: { page: Page }) => <LineIcon d={PATHS[page]} />;

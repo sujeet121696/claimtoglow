@@ -33,4 +33,6 @@ Python + FastAPI (`app/`), React + Vite + TypeScript (`web/`). Run instructions 
 ## Working agreements
 
 - Never commit or push. The user commits manually.
+- Follow [docs/RULES.md](docs/RULES.md): verdict math only in `app/verdict.py`, no faces or secrets
+  outside the lab, no billed YouCam analysis without asking, tests + `tsc` pass before handing back.
 - Keep docs lean, and update the relevant doc whenever scope, stack or tasks change.

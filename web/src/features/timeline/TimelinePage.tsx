@@ -51,15 +51,15 @@ export function TimelinePage() {
 function ConcernCard({ concern, data }: { concern: string; data: Timeline }) {
   const row = data.verdict.concerns.find((r) => r.concern === concern);
   const change = CHANGE[row?.result ?? "unknown"];
-  const sd = data.sd[concern];
+  const band = data.band[concern];
   return (
     <Card title={concernLabel(concern)} actions={<span className={`change ${change.tone}`}>{change.icon} {change.label}
       {row?.effect !== undefined && ` · ${row.effect > 0 ? "+" : ""}${row.effect.toFixed(1)} (noise ±${row.floor?.toFixed(1)})`}</span>}>
-      <TrendChart concern={concern} entries={data.entries} baseline={data.baseline[concern]} sd={sd} k0={data.k0}
+      <TrendChart concern={concern} entries={data.entries} baseline={data.baseline[concern]} band={band}
         duration={data.duration_days} row={row} checkpointDay={data.verdict.checkpoint_day} />
       <p className="small muted timeline-note">
         Change in treated − control since the baseline ({data.k0} photos: day 0 and the repeat photos); above 0 is better.
-        Grey band: what one photo can move by noise alone{sd !== null ? ` (SD ${sd.toFixed(2)})` : ""}.
+        Grey band: what one photo can move by noise alone, within a sitting and between days{band !== null ? ` (±${band.toFixed(1)})` : ""}.
         Diamond: the checkpoint the verdict uses, with its own noise range.
       </p>
     </Card>
@@ -67,10 +67,7 @@ function ConcernCard({ concern, data }: { concern: string; data: Timeline }) {
 }
 
 function CheckinsCard({ data }: { data: Timeline }) {
-  const band = (c: string) => {
-    const sd = data.sd[c];
-    return sd !== null ? 2 * sd * Math.sqrt(1 + 1 / data.k0) : undefined;
-  };
+  const band = (c: string) => data.band[c] ?? undefined;
   const changeOf = (e: TimelineEntry, c: string) => {
     const base = data.baseline[c];
     const v = e.tc?.[c];
@@ -119,7 +116,7 @@ function CheckinsCard({ data }: { data: Timeline }) {
       </div>
       <p className="small muted timeline-note">
         Changes are against the baseline. Only checkpoints count toward the verdict, so only they are coloured
-        (beyond one photo's noise band); daily photos are kept and analysed only if units are left at the end.
+        (beyond one photo's noise band). Analysed daily photos measure how much scores move between days.
       </p>
     </Card>
   );

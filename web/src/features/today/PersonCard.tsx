@@ -3,7 +3,7 @@ import { useStore } from "../../app/store";
 import type { Person } from "../../api/types";
 import { Badge } from "../../components/ui";
 import { CHANGE, concernLabel, dayStem, personLabel, sideShort, statusTone, type Kind } from "../../domain/trial";
-import { DayRing, nextCheckpoint } from "./DayRing";
+import { DayRing, nextCheckpoint } from "../../components/DayRing";
 import { Reminder } from "./Reminder";
 
 const GateBadge = ({ passed }: { passed: boolean | null | undefined }) =>

@@ -177,20 +177,37 @@ def treated_minus_control(set_name: str, treated_side: str) -> dict:
     return out
 
 
+def by_day(daily: dict) -> dict:
+    """{day: [T - C of each analysed photo that day]} from treated_minus_control of a trial set."""
+    out = {}
+    for stem, series in daily.items():
+        m = DAY_STEM.match(stem)
+        if m:
+            out.setdefault(int(m.group(1)), []).append(series)
+    return out
+
+
+def day_means(days: dict) -> list:
+    """One {concern: mean T - C} per analysed day, in day order: the series for the noise between days."""
+    out = []
+    for day in sorted(days):
+        photos = days[day]
+        out.append({c: sum(p[c] for p in photos) / len(photos)
+                    for c in photos[0] if all(c in p for p in photos)})
+    return out
+
+
 def trial_verdict(person: str) -> dict:
     """Baseline = day-00 + the repeat photos; checkpoint = the analysed photos of the latest
-    checkpoint day (day-07, day-07b, day-07c). Other analysed days are ignored."""
+    checkpoint day (day-07, day-07b, day-07c). Every analysed day measures the noise between days."""
     trial = read_trial(person)
     daily = treated_minus_control(f"trial-{person}", trial["treated_side"])
     repeats = treated_minus_control(f"noise-{person}", trial["treated_side"])
-    by_day = {}
-    for stem, series in daily.items():
-        m = DAY_STEM.match(stem)
-        if m and is_checkpoint(trial, int(m.group(1))):
-            by_day.setdefault(int(m.group(1)), []).append(series)
-    day = max(by_day) if by_day else None
+    days = by_day(daily)
+    checkpoints = [d for d in days if is_checkpoint(trial, d)]
+    day = max(checkpoints) if checkpoints else None
     baseline = ([daily["day-00"]] if "day-00" in daily else []) + list(repeats.values())
-    checkpoint = by_day.get(day, [])
-    result = verdict(trial["concerns"], baseline, checkpoint, list(repeats.values()),
+    checkpoint = days.get(day, [])
+    result = verdict(trial["concerns"], baseline, checkpoint, list(repeats.values()), day_means(days),
                      final=day is not None and day >= trial["duration_days"])
     return {**result, "person": person, "checkpoint_day": day, "duration_days": trial["duration_days"]}

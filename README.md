@@ -31,6 +31,13 @@ only when the evidence is strong enough to say so.
 
 ## Run locally
 
+**One command** (after `.env` is set up): `npm run local` in the repo root. It sets up anything
+missing (`.venv`, packages), cleans old builds, runs the unit tests and type-check, builds the lab
+app and the judge demo, then serves both at http://localhost:8000 (demo at `/demo/`). It stops at
+the first failure. `npm run local:tunnel` also starts the Cloudflare tunnel. Ctrl+C stops everything.
+
+By hand:
+
 ```sh
 cp .env.example .env                      # add your YouCam API key (and teammates' keys)
 python -m venv .venv
