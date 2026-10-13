@@ -1,7 +1,7 @@
 """Timeline and receipt for one trial (TASKS 21, 22).
 
 timeline: every daily photo in day order with its capture-gate result and treated − control
-scores, plus the baseline and noise SD needed to draw the noise band.
+scores, plus the baseline and the noise band one photo can't escape.
 receipt: the public, face-free record of a trial: claim, verdict, and the SHA-256 fingerprint of
 every photo it rests on. receipt_hash fingerprints the receipt itself, so any later edit shows.
 """
@@ -14,7 +14,9 @@ from datetime import datetime, timezone
 from .analyzer import photo_files
 from .config import PHOTOS
 from .masking import MASK_DIR, blanked_path
-from .trials import DAY_STEM, failed_checks, is_checkpoint, read_meta, read_trial, treated_minus_control, trial_verdict
+from .trials import (DAY_STEM, by_day, day_means, failed_checks, is_checkpoint, read_meta, read_trial,
+                     treated_minus_control, trial_verdict)
+from .verdict import MIN_DAYS, MIN_NOISE_PHOTOS, between_sd, floor_of, values
 
 
 def _sha256(path) -> str:
@@ -50,9 +52,19 @@ def timeline(person: str) -> dict:
         vals = [s[c] for s in series if c in s]
         return round(statistics.mean(vals), 2) if vals else None
 
+    days = day_means(by_day(daily))
+
     def sd_of(c):
-        vals = [s[c] for s in repeats if c in s]
+        vals = values(repeats, c)
         return round(statistics.stdev(vals), 2) if len(vals) >= 2 else None
+
+    def band_of(c):
+        """Noise for one photo against the baseline: the verdict's floor with k = 1."""
+        rep, day, k0 = values(repeats, c), values(days, c), len(values(baseline, c))
+        if len(rep) < MIN_NOISE_PHOTOS or len(day) < MIN_DAYS or not k0:
+            return None
+        sd = statistics.stdev(rep)
+        return round(floor_of(sd, between_sd(sd, day), 1, k0), 2)
 
     entries = []
     for photo in _photos(f"trial-{person}"):
@@ -74,6 +86,7 @@ def timeline(person: str) -> dict:
         "baseline": {c: mean_of(baseline, c) for c in concerns},
         "k0": len(baseline),
         "sd": {c: sd_of(c) for c in concerns},
+        "band": {c: band_of(c) for c in concerns},
         "entries": entries,
         "verdict": trial_verdict(person),
     }
@@ -99,7 +112,8 @@ def receipt(person: str, now: datetime | None = None) -> dict:
         "duration_days": trial["duration_days"],
         "verdict": {k: v[k] for k in ("status", "reason", "concerns", "checkpoint_day")},
         "method": "YouCam Skin Analysis raw_score on mirrored half-faces; change = treated − control "
-                  "vs baseline; counts only beyond 2·SD·√(1/k + 1/k0), SD from repeat photos.",
+                  "vs baseline; counts only beyond 2·√(SDw²·(1/k + 1/k0) + 2·SDb²), SDw from repeat photos "
+                  "in one sitting, SDb the extra noise between days from successive daily photos.",
         "photos": {"daily": _photos(f"trial-{person}"), "repeat": _photos(f"noise-{person}")},
     }
     # The time is outside the hash, so the same trial data always gives the same fingerprint.

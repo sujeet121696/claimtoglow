@@ -22,12 +22,11 @@ function useWidth(fallback: number) {
   return [ref, width] as const;
 }
 
-export function TrendChart({ concern, entries, baseline, sd, k0, duration, row, checkpointDay }: {
+export function TrendChart({ concern, entries, baseline, band, duration, row, checkpointDay }: {
   concern: string;
   entries: TimelineEntry[];
   baseline: number | null;
-  sd: number | null;
-  k0: number;
+  band: number | null;
   duration: number;
   row: VerdictRow | undefined;
   checkpointDay: number | null;
@@ -36,8 +35,6 @@ export function TrendChart({ concern, entries, baseline, sd, k0, duration, row, 
   const points = entries
     .filter((e) => e.day !== null && e.tc?.[concern] !== undefined && baseline !== null)
     .map((e) => ({ day: e.day!, change: e.tc![concern] - baseline!, checkpoint: e.checkpoint, stem: e.stem }));
-  // Noise for one photo against the baseline mean: 2·SD·√(1 + 1/k0) (verdict.py with k = 1).
-  const band = sd !== null && k0 ? 2 * sd * Math.sqrt(1 + 1 / k0) : null;
   const effect = row?.effect ?? null;
   const span = Math.max(1, band ?? 0, effect !== null ? Math.abs(effect) : 0, ...points.map((p) => Math.abs(p.change))) * 1.2;
 

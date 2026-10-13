@@ -78,20 +78,21 @@ app/       FastAPI: config.py (paths, settings), youcam.py (client), analyzer.py
            (client address, device), auth.py (sign-in, sessions), admin.py (admin API),
            users.py (CLI: add an account, reset a password), mail.py (Resend), main.py (API)
 web/src/   app/        shell, router (clean paths /page?key=value in the lab, served by the API's app fallback; #/page in the demo; old #/ links are converted), store (people, selected person, me),
-                       AccountMenu (sign in / account / Admin / sign out),
+                       AccountMenu (sign in / account / Admin / theme / sign out), ThemeSwitch,
                        mode (DEMO: read-only build, data from data/ instead of the API)
            api/        typed client, one function per endpoint (future agent tools, VISION D1)
            domain/     trial rules: kinds, set names, labels, concerns (mirrors app/trials.py)
            hooks/      useReference (day-0 metrics and ghost image), useLoad (page data)
            lib/        gate.ts (capture checks), landmarker, segmenter (person mask),
-                       gate and mask backfill, lab token, install (Install app), storage, beep
-           components/ PageHeader, Card, Segmented, Field, Badge, ChecksList
-           features/   account (LoginPage, LabLinkForm, PhoneQr, AdminPage, UsersCard), today (DayRing, Reminder + calendar.ts), people, capture (Camera), upload (Uploader), results,
-                       timeline (TrendChart), receipt (badge snippet)
+                       gate and mask backfill, lab token, install (Install app), storage, theme (System / Light / Dark), beep
+           components/ PageHeader, Card, Segmented, Field, Badge, ChecksList, DayRing, icons (LineIcon)
+           features/   account (LoginPage, LabLinkForm, PhoneQr, AdminPage, UsersCard), today (Reminder + calendar.ts), people, capture (Camera), upload (Uploader), results,
+                       timeline (TrendChart), receipt (slip with noise bars, hashes, badge snippet)
            styles/     tokens.css (colours, spacing), base.css, components.css
 web/dist/  built app (npm run build), served by FastAPI at /. Git-ignored
 web/dist-demo/ judge demo app (npm run build:demo), served at /demo/ with live data. Git-ignored
-scripts/   noise_test.py (CLI), export_demo.py (demo as a static site, only for a static host)
+scripts/   noise_test.py (CLI), export_demo.py (demo as a static site, only for a static host),
+           local.mjs (`npm run local` from the root package.json: setup, clean, check, build, run)
 tests/     unittest: verdict rule, checkpoint days and names, receipt hash and badge, claim agent and provider fallback,
            sign-in (password hashing, safe redirects, wrong-password limit, admins, email links) (no network)
 photos/    <set>/<stem>.jpg + <stem>.meta.json (gate result, SHA-256). Git-ignored
@@ -112,7 +113,7 @@ results/   <set>/<stem>.json, <set>-split/<stem>-L.json. Git-ignored
 | Capture gate | Camera frame or photo + day-0 reference | pass/fail per check + hint | `web/src/lib/gate.ts`; thresholds checked on all 21 photos (Oct 8) |
 | Analyzer | Accepted photo | `{ concern: raw_score }`, cached locally | `app/analyzer.py` |
 | Noise floor | Repeat-photo scores | Per-concern floor (2√2 × SD) | `app/noise.py` |
-| Verdict engine | Claimed concerns, T − C per photo (baseline, checkpoint, repeats) | met / not met / not enough evidence, per-concern effect and floor | `app/verdict.py` + `trial_verdict` in `app/trials.py`; shown on Today; `GET /api/people/{person}/verdict` |
+| Verdict engine | Claimed concerns, T − C per photo (baseline, checkpoint, repeats) and per analysed day (noise between days, ≥ 4 days) | met / not met / not enough evidence, per-concern effect and floor | `app/verdict.py` + `trial_verdict` in `app/trials.py`; shown on Today; `GET /api/people/{person}/verdict` |
 | Timeline | Daily photos, T − C, baseline, repeat-photo SD | Chart per claimed concern with the noise band; check-in table | `timeline()` in `app/receipt.py`, `GET /api/people/{person}/timeline`, Timeline page |
 | Receipt | Claim, verdict, every photo's SHA-256 | Face-free record + `receipt_hash` (SHA-256 of its canonical JSON, without the time) + SVG badge | `receipt()`, `badge_svg()` in `app/receipt.py`; `GET /api/people/{person}/receipt`, `/badge.svg`; Receipt page |
 | Daily reminder | Time (7 AM / 7 PM / any), trial dates | Calendar events: .ics (alarm at the time) or a Google Calendar link; no token in links | `web/src/features/today/calendar.ts`, `Reminder.tsx`; time saved as `reminder_time` in trial.json via `PUT /api/people/{person}/reminder` |

@@ -79,7 +79,7 @@ export type TimelineEntry = {
   tc: Scores | null;
 };
 
-export type VerdictRow = ConcernResult & { sd?: number; k: number; k0: number; noise_n: number };
+export type VerdictRow = ConcernResult & { sd?: number; sd_between?: number; k: number; k0: number; noise_n: number; days_n: number };
 export type TrialVerdict = { status: VerdictStatus; reason: string; concerns: VerdictRow[]; checkpoint_day: number | null };
 
 export type Timeline = {
@@ -90,6 +90,7 @@ export type Timeline = {
   baseline: Record<string, number | null>; // mean treated − control at day 0 + repeat photos
   k0: number;
   sd: Record<string, number | null>; // SD of treated − control over the repeat photos
+  band: Record<string, number | null>; // noise one photo can move vs baseline, within a sitting and between days
   entries: TimelineEntry[];
   verdict: TrialVerdict;
 };
