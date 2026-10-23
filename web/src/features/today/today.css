@@ -1,10 +1,9 @@
 .people-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-4); }
 
-/* A soft lavender band at the top, a gentle lift under the mouse, a quiet fade-in. */
+/* A plain card, a border that darkens under the mouse, a quiet fade-in. */
 .person-card {
   display: grid; gap: var(--space-3); align-content: start;
-  background: linear-gradient(180deg, var(--note-bg), var(--surface) 96px);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s;
   animation: card-in 0.35s ease-out both;
 }
 .person-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); }
@@ -34,7 +33,7 @@
 .people-grid > :nth-child(n + 4) { animation-delay: 0.15s; }
 @keyframes card-in { from { opacity: 0; } }
 @media (hover: hover) {
-  .person-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgb(10 37 64 / 0.08); }
+  .person-card:hover { border-color: var(--border-strong); }
 }
 
 .next-checkpoint { margin: 0; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--surface); border: 1px dashed var(--border-strong); color: var(--muted); }

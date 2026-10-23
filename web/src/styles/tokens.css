@@ -30,7 +30,7 @@
   --space-6: 32px;
   --radius: 12px;
   --radius-sm: 8px;
-  --shadow: 0 1px 2px rgb(10 37 64 / 0.06);
+  --shadow: none; /* cards have a border, so no shadow too (Oct 24) */
   --page-max: 1200px;
   color-scheme: light;
 }

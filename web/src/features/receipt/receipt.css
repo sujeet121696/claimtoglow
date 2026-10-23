@@ -5,10 +5,10 @@
 .slip { display: grid; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
 .slip > * { padding: var(--space-4) var(--space-6); }
 .slip > * + * { border-top: 1px dashed var(--border-strong); }
-.slip h3 { margin: 0 0 var(--space-3); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.slip h3 { margin: 0 0 var(--space-3); font-size: 13px; font-weight: 700; color: var(--muted); }
 
 .slip-head { text-align: center; }
-.slip-kicker { margin: 0 0 var(--space-2); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.slip-kicker { margin: 0 0 var(--space-2); font-size: 13px; font-weight: 700; color: var(--muted); }
 .slip-head h2 { margin: 0; font-family: var(--font-display); font-size: 24px; letter-spacing: -0.01em; }
 .slip-head blockquote { margin: var(--space-2) auto 0; max-width: 60ch; color: var(--muted); font-size: 14px; line-height: 1.5; }
 
@@ -47,7 +47,7 @@
 .facts dd { margin: 0; }
 
 .slip-foot { display: grid; gap: var(--space-1); text-align: center; }
-.slip-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.slip-label { font-size: 13px; font-weight: 700; color: var(--muted); }
 .hash { overflow-wrap: anywhere; font-size: 13px; }
 
 /* Evidence */

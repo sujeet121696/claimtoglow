@@ -3,12 +3,7 @@
 
 body {
   margin: 0;
-  /* A soft green glow behind the top of every page; the tokens keep it right in dark mode. */
-  background:
-    radial-gradient(900px 360px at 12% -120px, color-mix(in srgb, var(--brand-green) 10%, transparent), transparent),
-    radial-gradient(700px 320px at 95% -160px, color-mix(in srgb, var(--lavender) 35%, transparent), transparent),
-    var(--bg);
-  background-repeat: no-repeat;
+  background: var(--bg); /* flat: surfaces are told apart by tone steps, not gradients (Oct 24) */
   color: var(--text);
   font: 15px/1.5 var(--font-body);
   -webkit-tap-highlight-color: transparent;
@@ -80,9 +75,7 @@ thead th { color: var(--muted); font-weight: 600; }
   margin: 0 -16px;
   padding: max(var(--space-3), env(safe-area-inset-top)) 16px var(--space-3);
   border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--bg); /* solid, no glass */
 }
 /* Wordmark as KharidWise does it: navy words, the last one in AI Green, logo tile before it. */
 .brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; letter-spacing: -0.02em; }
@@ -121,8 +114,7 @@ thead th { color: var(--muted); font-weight: 600; }
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
     display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0;
     padding: 6px 4px max(6px, env(safe-area-inset-bottom));
-    background: color-mix(in srgb, var(--surface) 90%, transparent);
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    background: var(--surface);
     border-top: 1px solid var(--border);
   }
   .main-nav a { flex-direction: column; gap: 2px; padding: 6px 2px; font-size: 11px; position: relative; }
