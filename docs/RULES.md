@@ -41,7 +41,9 @@
   face-free and carry no notes or key names (`app/demo.py`).
 - `/api` and `/files` are locked by the middleware in `app/main.py`. A new open path (`OPEN_PATHS`)
   needs a reason; admin routes always need an admin session; sign-in and admin changes need a
-  same-site `Origin`. Keep `Cache-Control: no-store` on private responses.
+  same-site `Origin`. Keep `Cache-Control: no-store` on private responses; the one exception is a
+  background-free photo at a versioned URL (`?v=`), which the browser keeps (`private`, so never
+  Cloudflare; `main.private_cache`).
 - Don't trust input: check person and set names, file names and concerns against the allowed lists.
 - Pin dependency versions. Before submitting: `npm audit --omit=dev`, `pip-audit -r requirements.txt`
   and a secret scan (`detect-secrets scan`). Oct 13: all three clean, git history too.

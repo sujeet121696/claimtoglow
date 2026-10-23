@@ -13,8 +13,8 @@ from datetime import datetime, timezone
 
 from .analyzer import photo_files
 from .config import PHOTOS
-from .masking import MASK_DIR, blanked_path
-from .trials import (DAY_STEM, by_day, day_means, failed_checks, is_checkpoint, read_meta, read_trial,
+from .masking import masked_urls
+from .trials import (DAY_STEM, by_day, checkpoint_for, day_means, failed_checks, is_checkpoint, read_meta, read_trial,
                      treated_minus_control, trial_verdict)
 from .verdict import MIN_DAYS, MIN_NOISE_PHOTOS, between_sd, floor_of, values
 
@@ -70,12 +70,12 @@ def timeline(person: str) -> dict:
     for photo in _photos(f"trial-{person}"):
         m = DAY_STEM.match(photo["stem"])
         day = int(m.group(1)) if m else None
-        blanked = blanked_path(f"trial-{person}", photo["stem"])
         entries.append({
             **photo,
             "day": day,
             "checkpoint": day is not None and is_checkpoint(trial, day),
-            "masked_url": f"/files/photos/trial-{person}/{MASK_DIR}/{blanked.name}" if blanked else None,
+            "checkpoint_for": checkpoint_for(trial, day) if day is not None else None,
+            **masked_urls(f"trial-{person}", photo["stem"]),
             "tc": daily.get(photo["stem"]),  # {concern: treated − control}, None when not analysed
         })
     return {
@@ -110,7 +110,7 @@ def receipt(person: str, now: datetime | None = None) -> dict:
         "treated_side": trial["treated_side"],
         "start_date": trial["start_date"],
         "duration_days": trial["duration_days"],
-        "verdict": {k: v[k] for k in ("status", "reason", "concerns", "checkpoint_day")},
+        "verdict": {k: v[k] for k in ("status", "reason", "concerns", "checkpoint_day", "checkpoint_for")},
         "method": "YouCam Skin Analysis raw_score on mirrored half-faces; change = treated − control "
                   "vs baseline; counts only beyond 2·√(SDw²·(1/k + 1/k0) + 2·SDb²), SDw from repeat photos "
                   "in one sitting, SDb the extra noise between days from successive daily photos.",

@@ -27,10 +27,13 @@ export function DayRing({ day, duration }: { day: number | null; duration: numbe
   );
 }
 
-/** "Checkpoint today", "Next checkpoint: day 7, in 5 days", or nothing outside the trial. */
-export function nextCheckpoint(day: number | null, duration: number): string | null {
+/** "Checkpoint today", "Next checkpoint: day 7, in 5 days", or nothing outside the trial.
+ *  `done`: today's photos are all taken, so today's checkpoint no longer counts as upcoming. */
+export function nextCheckpoint(day: number | null, duration: number, done = false): string | null {
   if (day === null || day < 0 || day > duration) return null;
-  const next = Math.min(Math.ceil(Math.max(day, 1) / 7) * 7, duration);
+  const from = done ? day + 1 : Math.max(day, 1);
+  if (from > duration) return "Last checkpoint done";
+  const next = Math.min(Math.ceil(from / 7) * 7, duration);
   if (next === day) return "Checkpoint today: 3 photos";
   const n = next - day;
   return `Next checkpoint: day ${next}, in ${n} ${n === 1 ? "day" : "days"}`;

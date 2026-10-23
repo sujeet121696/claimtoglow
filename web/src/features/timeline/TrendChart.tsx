@@ -22,6 +22,20 @@ function useWidth(fallback: number) {
   return [ref, width] as const;
 }
 
+/** Runs of days with no photo at all, between day 1 and the latest photo: [[11, 15]]. */
+function missedDays(entries: TimelineEntry[]): [number, number][] {
+  const taken = new Set(entries.flatMap((e) => (e.day === null ? [] : [e.day])));
+  const last = Math.max(0, ...taken);
+  const runs: [number, number][] = [];
+  for (let d = 1; d < last; d++) {
+    if (taken.has(d)) continue;
+    const run = runs[runs.length - 1];
+    if (run && run[1] === d - 1) run[1] = d;
+    else runs.push([d, d]);
+  }
+  return runs;
+}
+
 export function TrendChart({ concern, entries, baseline, band, duration, row, checkpointDay }: {
   concern: string;
   entries: TimelineEntry[];
@@ -43,12 +57,23 @@ export function TrendChart({ concern, entries, baseline, band, duration, row, ch
   const checkpoints = Array.from({ length: Math.floor(duration / 7) }, (_, i) => (i + 1) * 7);
   if (!checkpoints.includes(duration)) checkpoints.push(duration);
   const fmt = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)}`;
+  const gaps = missedDays(entries);
 
   return (
     <div ref={ref} className="trend-wrap">
       <svg className="trend" viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img"
         aria-label={`${concern}: change since baseline for ${points.length} analysed check-ins`}>
         {band !== null && <rect className="band" x={PAD.l} width={W - PAD.l - PAD.r} y={y(band)} height={y(-band) - y(band)} />}
+        {gaps.map(([from, to]) => {
+          const x0 = x(from - 0.5), x1 = x(to + 0.5);
+          const label = from === to ? `day ${from}: no photo` : `days ${from}–${to}: no photos`;
+          return (
+            <g key={from} className="gap">
+              <rect x={x0} width={x1 - x0} y={PAD.t} height={H - PAD.t - PAD.b}><title>{label}</title></rect>
+              {x1 - x0 >= 56 && <text className="tick" x={(x0 + x1) / 2} y={PAD.t + 14} textAnchor="middle">no photos</text>}
+            </g>
+          );
+        })}
         <line className="zero" x1={PAD.l} x2={W - PAD.r} y1={y(0)} y2={y(0)} />
         {[span / 1.2, -span / 1.2].map((v) => (
           <text key={v} className="tick" x={PAD.l - 6} y={y(v) + 4} textAnchor="end">{fmt(v)}</text>

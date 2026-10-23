@@ -22,7 +22,10 @@ export function PersonCard({ person: p }: { person: Person }) {
   const { selectPerson, edit } = useStore();
   const noiseDone = p.noise_count >= p.noise_target;
   const checkpoint = p.today_target > 1; // day 7, 14, 21: three fresh photos, averaged
-  const upcoming = nextCheckpoint(p.day, p.duration_days);
+  // A missed checkpoint moves to the next day with a photo (trials.checkpoint_for).
+  const late = checkpoint && p.day !== null && p.day % 7 !== 0 && p.day !== p.duration_days;
+  const upcoming = late && !p.today_done ? `Late checkpoint today, for day ${Math.floor(p.day! / 7) * 7}: 3 photos`
+    : nextCheckpoint(p.day, p.duration_days, p.today_done);
   // Same time of day as day 0 means the same light.
   const day0Time = p.day0?.saved_at
     ? new Date(p.day0.saved_at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
@@ -96,7 +99,7 @@ export function PersonCard({ person: p }: { person: Person }) {
 
       {p.day0 ? (
         <div className={`day0 ${p.latest ? "with-latest" : ""}`}>
-          <img src={p.day0.masked_url ?? p.day0.url} alt={`${personLabel(p.person)}, day 0`} />
+          <img src={p.day0.thumb_url ?? p.day0.masked_url ?? p.day0.url} decoding="async" alt={`${personLabel(p.person)}, day 0`} />
           <div className="small">
             <div className="day0-title">
               <b>Day 0</b>
@@ -110,7 +113,7 @@ export function PersonCard({ person: p }: { person: Person }) {
           </div>
           {p.latest && (
             <>
-              <img src={p.latest.masked_url ?? p.latest.url} alt={`${personLabel(p.person)}, ${p.latest.stem}`} />
+              <img src={p.latest.thumb_url ?? p.latest.masked_url ?? p.latest.url} decoding="async" alt={`${personLabel(p.person)}, ${p.latest.stem}`} />
               <div className="small">
                 <div className="day0-title">
                   <b>Latest</b>

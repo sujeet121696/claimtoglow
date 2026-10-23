@@ -13,18 +13,18 @@ export function PhotoStrip({ photos, errors, onRetake }: {
 
   return (
     <div className="photo-strip">
-      {photos.map((p) => {
+      {[...photos].reverse().map((p) => { // newest first (names sort in day order)
         const gate = p.meta.gate;
         const missed = gate?.checks.filter((c) => !c.pass) ?? [];
         const failed = missed.filter((c) => !c.optional).map((c) => c.label); // these blocked the photo
         const advice = missed.filter((c) => c.optional); // these only advise, so they aren't shown as errors
         // The image shown here is the one this device may load; the download is named <set>-<file>.
         const src = p.masked_url ?? p.url;
-        const fileName = `${p.url.split("/")[3]}-${src.split("/").pop()}`;
+        const fileName = `${p.url.split("/")[3]}-${src.split("?")[0].split("/").pop()}`;
         return (
           <figure key={p.stem} className="photo-card">
             <a href={src} target="_blank" rel="noopener" title="View full size">
-              <img src={src} alt={p.stem} loading="lazy" />
+              <img src={p.thumb_url ?? src} alt={p.stem} loading="lazy" decoding="async" />
             </a>
             <figcaption>
               <div className="photo-title">

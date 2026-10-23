@@ -109,9 +109,9 @@ G2 and G4 are the core. Without them this is just another skin tracker.
 | By | Criterion |
 |---|---|
 | Oct 7 ✓ | Noise floor measured; go/no-go decided |
-| Oct 26 | A stranger can open the test link, run a claim end to end, and read a verdict |
-| Oct 26 | Demo video tells claim → split-face trial → verdict in under 3 minutes; submitted |
-| Oct 28 | Consistent daily split-face check-ins through day 21; final verdict added by Oct 29 |
+| Oct 28 | Consistent daily split-face check-ins through day 21 (days 11–15 missed; day 14 made up on day 16); final verdict |
+| Oct 31 | A stranger can open the test link, run a claim end to end, and read a verdict |
+| Oct 31 | Demo video tells claim → split-face trial → verdict in under 3 minutes; submitted |
 
 ## 9. Constraints
 
@@ -132,8 +132,8 @@ G2 and G4 are the core. Without them this is just another skin tracker.
   Daily photos are analysed only if units are left at the end.
 
 **Time**
-- Finish and submit by **Oct 26** (one week early, decided Oct 8), alongside Ringproof (Nebius,
-  Oct 30). Only the day-21 verdict is added after, by Oct 29.
+- Finish and submit by **Oct 31** (moved from Oct 26 on Oct 23, so the final day-21 verdict is in
+  the submission), alongside Ringproof (Nebius, Oct 30). Nov 1–2 are buffer.
 
 ## 10. Risks
 

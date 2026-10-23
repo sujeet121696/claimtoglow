@@ -38,6 +38,7 @@
 | Clean addresses (Oct 11) | The lab uses /today, /login, /admin like kharidwise, not #/today; old # links still open. The demo keeps # routes (a static folder already linked on Devpost) |
 | Account menu, not a tab (Oct 11) | Sign in and Admin sit behind a round icon in the top bar, so the phone keeps six tabs; the admin page is plain tables that scroll sideways on a phone |
 | Motion is quiet (Oct 9) | Pages fade in, cards appear one after another, the ring fills on load. Opacity only (a transform would trap the full-screen camera), and none at all when the device asks for reduced motion |
+| Gaps shown, not hidden (Oct 23) | Days with no photo are a grey "no photos" column on the timeline chart, so a missed stretch (days 11–15) reads as honest, not as a smooth line |
 | Charts at real size (Oct 9) | The timeline chart is drawn at the width it is shown, so its text is the same size on a phone and a laptop |
 
 ## 4. Open questions

@@ -6,6 +6,7 @@ the Vite proxy (Wi-Fi) or a Cloudflare Tunnel, and need the lab token or a sign-
 """
 
 import hashlib
+import logging
 import json
 import time
 import re
@@ -16,7 +17,7 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import Body, FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from pydantic import BaseModel, Field
@@ -28,7 +29,7 @@ from .claim import parse_claim
 from .config import NAME_RE, PHOTOS, WEB_DEMO, WEB_DIST, key_var_for, lab_token, person_of, public_url
 from .db import log_access
 from .llm import LLMError
-from .masking import MASK_DIR, blanked_path, save_mask
+from .masking import MASK_DIR, THUMB_DIR, make_thumb, masked_urls, save_mask
 from .net import client_ip, device, is_https, is_local
 from .noise import noise_rows, split_pairs
 from .demo import demo_people, demo_timeline
@@ -40,6 +41,7 @@ from .youcam import YouCam, YouCamError
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 
 app = FastAPI(title="Claim to Glow lab")
+log = logging.getLogger("uvicorn.error")  # shows in the server console beside the request lines
 PHOTOS.mkdir(exist_ok=True)
 LAB_PORT = 5173  # where Vite serves the lab (npm run dev / dev:phone)
 
@@ -83,10 +85,30 @@ async def lock_remote_devices(request: Request, call_next):
                 note_visit(request, user)
     response = await call_next(request)
     if private:
-        response.headers["Cache-Control"] = "private, no-store"  # Cloudflare and browsers never keep faces or scores
+        response.headers["Cache-Control"] = private_cache(path, bool(request.query_params.get("v")), response.status_code)
     elif request.url.path.startswith("/demo/data/"):
         response.headers["Cache-Control"] = "no-store"  # live demo data: Cloudflare and browsers never keep a stale copy
+    else:
+        response.headers.setdefault("Cache-Control", public_cache(path, response.status_code))
     return response
+
+
+def public_cache(path: str, status: int) -> str:
+    """The app shell and demo: Vite's hashed files (/assets/, /demo/assets/) change name with every
+    build, so they are kept for good; pages, icons and fonts are checked again on every load (a quick
+    304 when unchanged), so a new build shows up without a hard reload."""
+    if status == 200 and path.startswith(("/assets/", "/demo/assets/")):
+        return "public, max-age=31536000, immutable"
+    return "no-cache"
+
+
+def private_cache(path: str, versioned: bool, status: int) -> str:
+    """A background-free photo at a versioned URL (masking.masked_urls) never changes, so the
+    browser keeps it; "private" keeps it out of Cloudflare, and a new version gets a new URL.
+    Scores, originals and everything else: Cloudflare and browsers never keep them."""
+    if status == 200 and versioned and path.startswith("/files/photos/") and f"/{MASK_DIR}/" in path:
+        return "private, max-age=31536000, immutable"
+    return "private, no-store"
 
 
 _visits = {}
@@ -141,7 +163,7 @@ def photo_info(name: str, photo: Path, whole: dict, halves: dict) -> dict:
         "stem": photo.stem,
         "file": photo.name,
         "url": f"/files/photos/{name}/{photo.name}",
-        "masked_url": masked_url(name, photo.stem),
+        **masked_urls(name, photo.stem),
         "sha256": actual,
         # The fingerprint saved at capture no longer matches the file: it was replaced or edited.
         "tampered": bool(meta.get("sha256")) and meta["sha256"] != actual,
@@ -149,12 +171,6 @@ def photo_info(name: str, photo: Path, whole: dict, halves: dict) -> dict:
         "scores": whole.get(photo.stem),
         "split": {"L": halves[photo.stem][0], "R": halves[photo.stem][1]} if photo.stem in halves else None,
     }
-
-
-def masked_url(name: str, stem: str):
-    """The copy with the background removed: the only version other devices may load."""
-    path = blanked_path(name, stem)
-    return f"/files/photos/{name}/{MASK_DIR}/{path.name}" if path else None
 
 
 def next_stem(name: str) -> str:
@@ -238,11 +254,13 @@ def analyze_photo(name: str, stem: str, split: bool = False):
     try:
         targets = mirror_halves(photo, out_dir / "images") if split else [photo]
     except OSError as e:
+        log.warning("analyse %s/%s: unreadable image: %s", name, stem, e)
         raise HTTPException(422, f"Could not read {photo.name} as an image: {e}")
     try:
         for target in targets:
             analyze_cached(client(name), target, out_dir)
     except YouCamError as e:
+        log.warning("analyse %s/%s split=%s: YouCam rejected it: %s: %s", name, stem, split, e.code, e.message)
         raise HTTPException(422, {"code": e.code, "message": e.message})
     except RuntimeError as e:
         raise HTTPException(502, str(e))
@@ -418,8 +436,19 @@ def reference(name: str):
     for p in photo_files(PHOTOS / ref_set):
         if p.stem == "day-00":
             return {"set": ref_set, "url": f"/files/photos/{ref_set}/{p.name}",
-                    "masked_url": masked_url(ref_set, p.stem), "meta": read_meta(p)}
+                    **masked_urls(ref_set, p.stem), "meta": read_meta(p)}
     return None
+
+
+@app.get(f"/files/photos/{{name}}/{MASK_DIR}/{THUMB_DIR}/{{file}}")
+def thumbnail(name: str, file: str):
+    """Small background-free copy for lists and cards, made on first request (masking.make_thumb)."""
+    stem = file.removesuffix(".jpg")
+    find_photo(name, stem)  # checks the set name and that the photo exists
+    thumb = make_thumb(name, stem)
+    if not thumb:
+        raise HTTPException(404, "No background-free copy yet")
+    return FileResponse(thumb, media_type="image/jpeg")
 
 
 app.mount("/files/photos", StaticFiles(directory=PHOTOS), name="photos")

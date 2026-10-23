@@ -14,7 +14,7 @@ from datetime import date, datetime
 
 from .analyzer import cached_scores, photo_files, result_dir
 from .config import PHOTOS, RESULTS, key_var_for
-from .masking import MASK_DIR, mask_files
+from .masking import mask_files, masked_urls
 from .noise import split_pairs
 from .verdict import verdict
 
@@ -57,12 +57,26 @@ def day_of(trial: dict, on: date | None = None):
     return ((on or date.today()) - date.fromisoformat(trial["start_date"])).days
 
 
-def is_checkpoint(trial: dict, day: int) -> bool:
+def is_planned_checkpoint(trial: dict, day: int) -> bool:
     return day > 0 and (day % CHECKPOINT_EVERY == 0 or day == trial["duration_days"])
 
 
+def checkpoint_for(trial: dict, day: int):
+    """The checkpoint day this day stands for, or None. A missed checkpoint is made up on a day
+    listed in trial.json `late_checkpoints` ({"16": 14}: day 16 is the late day-14 checkpoint)."""
+    if day <= 0 or day > trial["duration_days"]:
+        return None
+    if is_planned_checkpoint(trial, day):
+        return day
+    return (trial.get("late_checkpoints") or {}).get(str(day))
+
+
+def is_checkpoint(trial: dict, day: int) -> bool:
+    return checkpoint_for(trial, day) is not None
+
+
 def day_stems(trial: dict, day: int) -> list:
-    """The photo names a day needs: one, or three on a checkpoint day."""
+    """The photo names a day needs: one, or three on a checkpoint day (planned or late)."""
     stem = f"day-{day:02d}"
     return [stem, f"{stem}b", f"{stem}c"][:CHECKPOINT_PHOTOS] if is_checkpoint(trial, day) else [stem]
 
@@ -115,7 +129,7 @@ def summary(person: str) -> dict:
         "verdict": {k: v for k, v in trial_verdict(person).items() if k in ("status", "reason", "concerns")},
         "day0": {
             "url": f"/files/photos/trial-{person}/{day0.name}",
-            "masked_url": f"/files/photos/trial-{person}/{MASK_DIR}/day-00.jpg" if mask_files(f"trial-{person}", "day-00")[1].exists() else None,
+            **masked_urls(f"trial-{person}", "day-00"),
             "saved_at": day0_meta.get("saved_at"),  # same time of day = same light
             "gate_passed": gate.get("passed") if gate else None,
             "failed": failed_checks(gate),
@@ -124,8 +138,7 @@ def summary(person: str) -> dict:
         "latest": {
             "stem": latest.stem,
             "url": f"/files/photos/trial-{person}/{latest.name}",
-            "masked_url": (f"/files/photos/trial-{person}/{MASK_DIR}/{latest.stem}.jpg"
-                           if mask_files(f"trial-{person}", latest.stem)[1].exists() else None),
+            **masked_urls(f"trial-{person}", latest.stem),
             "gate_passed": latest_gate.get("passed") if latest_gate else None,
             "failed": failed_checks(latest_gate),
         } if latest else None,
@@ -210,4 +223,5 @@ def trial_verdict(person: str) -> dict:
     checkpoint = days.get(day, [])
     result = verdict(trial["concerns"], baseline, checkpoint, list(repeats.values()), day_means(days),
                      final=day is not None and day >= trial["duration_days"])
-    return {**result, "person": person, "checkpoint_day": day, "duration_days": trial["duration_days"]}
+    return {**result, "person": person, "checkpoint_day": day, "duration_days": trial["duration_days"],
+            "checkpoint_for": checkpoint_for(trial, day) if day is not None else None}

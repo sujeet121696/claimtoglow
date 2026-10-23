@@ -19,5 +19,5 @@ def demo_people() -> dict:
 def demo_timeline(person: str) -> dict:
     t = timeline(person)
     for entry in t["entries"]:
-        entry["masked_url"] = None
+        entry["masked_url"] = entry["thumb_url"] = None
     return t

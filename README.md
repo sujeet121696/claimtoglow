@@ -99,12 +99,13 @@ cd web && npm run build                                       # after any web ch
 cloudflared --config ~/.cloudflared/claimtoglow.yml tunnel run
 ```
 
-Share the lab: Today → "Open on phone" → **Anywhere** → scan or Copy link. Two locks protect it:
-Cloudflare Access (team emails only) and the lab token in that link (or a sign-in, see below).
+Share the lab: Today → "Open on phone" → **Anywhere** → scan or Copy link. The lab token in that
+link (or a sign-in, see below) is the lock; there is no Cloudflare Access login (removed Oct 13), so
+anyone can open the sign-in page and the demo, but no data, scores or photos.
 
 ## Sign-in and admin page
 
-Optional on top of Cloudflare Access and the lab link: team accounts, and an admin page
+Optional on top of the lab link: team accounts, and an admin page
 (account menu → Admin) with every trial, YouCam usage per key, users, the access log and settings.
 Invite-only: the emails in `ADMIN_EMAILS` are admins; everyone else is added on the admin page.
 Accounts, sessions and the log live in `lab.db` (git-ignored); passwords are stored as scrypt hashes.

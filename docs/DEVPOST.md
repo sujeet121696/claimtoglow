@@ -118,7 +118,7 @@ _TODO_ (task 24, YouTube, 1–3 min)
 | Country of residence | India |
 | App status | **New**. The repo's first commit (Sep 27) was the MIT license only; all code was written from Oct 6, inside the submission period |
 | If existing, what was updated | Leave empty |
-| Code repository | `https://github.com/sujeet121696/claimtoglow` (with https://) (public, or shared with contact_event@PerfectCorp.com, by Oct 26) |
+| Code repository | `https://github.com/sujeet121696/claimtoglow` (with https://) (public, or shared with contact_event@PerfectCorp.com, by Oct 30) |
 | Social posts | LinkedIn post (task 3), then the YouTube demo video |
 
 ### Features, functionality, and consumer or retail value

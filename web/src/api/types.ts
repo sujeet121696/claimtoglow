@@ -20,6 +20,7 @@ export type Photo = {
   file: string;
   url: string;
   masked_url: string | null; // background removed: what other devices see
+  thumb_url: string | null; // small copy of it for lists and cards
   sha256: string;
   tampered: boolean;
   meta: PhotoMeta;
@@ -46,13 +47,13 @@ export type Person = {
   checkins: string[];
   today_done: boolean;
   today_count: number; // photos taken today
-  today_target: number; // 3 on a checkpoint day (day 7, 14, 21), 0 once the trial has ended, else 1
+  today_target: number; // 3 on a checkpoint day (day 7, 14, 21, or the day after a missed one), 0 once the trial has ended, else 1
   today_next: string | null; // name of the next photo, e.g. day-07b
   // newest check-in after day 0, with its capture-gate result
-  latest: { stem: string; url: string; masked_url: string | null; gate_passed: boolean | null; failed: string[] } | null;
+  latest: { stem: string; url: string; masked_url: string | null; thumb_url: string | null; gate_passed: boolean | null; failed: string[] } | null;
   noise_count: number;
   noise_target: number;
-  day0: { url: string; masked_url: string | null; saved_at: string | null; gate_passed: boolean | null; failed: string[] } | null;
+  day0: { url: string; masked_url: string | null; thumb_url: string | null; saved_at: string | null; gate_passed: boolean | null; failed: string[] } | null;
   verdict: { status: VerdictStatus; reason: string; concerns: ConcernResult[] };
 };
 
@@ -70,17 +71,21 @@ export type TimelineEntry = {
   stem: string;
   day: number | null;
   checkpoint: boolean;
+  checkpoint_for: number | null; // planned checkpoint day this photo stands for
   saved_at: string | null;
   sha256: string;
   tampered: boolean;
   gate_passed: boolean | null;
   failed: string[];
   masked_url: string | null;
+  thumb_url: string | null;
   tc: Scores | null;
 };
 
 export type VerdictRow = ConcernResult & { sd?: number; sd_between?: number; k: number; k0: number; noise_n: number; days_n: number };
-export type TrialVerdict = { status: VerdictStatus; reason: string; concerns: VerdictRow[]; checkpoint_day: number | null };
+export type TrialVerdict = { status: VerdictStatus; reason: string; concerns: VerdictRow[]; checkpoint_day: number | null;
+  checkpoint_for?: number | null; // the planned day when the checkpoint was taken late (day 16 for day 14)
+};
 
 export type Timeline = {
   person: string;

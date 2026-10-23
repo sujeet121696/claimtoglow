@@ -62,7 +62,7 @@ expression, mouth closed, eyes open. Errors to handle: `error_src_face_too_small
 | Backend | Python + FastAPI (`app/`), same as Ringproof. Photos and results on local disk |
 | Web app | React + Vite + TypeScript (`web/`), same as Ringproof |
 | Noise test | `scripts/noise_test.py`, shares `app/` modules and the results cache with the web app |
-| Hosting | The lab PC. Wi-Fi: Vite dev server (`npm run dev:phone`). Anywhere: Cloudflare Tunnel to FastAPI, which also serves the built app (`web/dist`), behind Cloudflare Access |
+| Hosting | The lab PC. Wi-Fi: Vite dev server (`npm run dev:phone`). Anywhere: Cloudflare Tunnel to FastAPI, which also serves the built app (`web/dist`); no Cloudflare Access (removed Oct 13), the app's own lock guards the data |
 
 **Decided Oct 6:** same stack as Ringproof, so the provider layer and dashboard patterns carry over.
 **Decided Oct 7:** Cloudflare Tunnel, not a cloud server, until the agent phase (VISION D10).
@@ -97,6 +97,7 @@ tests/     unittest: verdict rule, checkpoint days and names, receipt hash and b
            sign-in (password hashing, safe redirects, wrong-password limit, admins, email links) (no network)
 photos/    <set>/<stem>.jpg + <stem>.meta.json (gate result, SHA-256). Git-ignored
            <set>/_mask/<stem>.png (person mask) + <stem>.jpg (room replaced by flat grey)
+           <set>/_mask/thumb/<stem>.jpg (480 px copy for lists and cards)
            trial-<person>/trial.json: product, claim, claimed concerns, treated side, day 0, length.
            trial-<person>: daily photos day-NN, NN = days since day 0 (gaps stay gaps);
            noise-<person>: repeat photos shot-NN. Both matched against trial-<person>/day-00.
@@ -121,13 +122,16 @@ results/   <set>/<stem>.json, <set>-split/<stem>-L.json. Git-ignored
 | Judge demo | Timeline, receipt, badge without photo links, notes or key names | Read-only site at `/demo/`, data live from `/demo/data/` (public) | `app/demo.py`, `npm run build:demo` → `web/dist-demo/`; `scripts/export_demo.py` for a static host |
 
 **Access:** `/api` and `/files` answer this PC freely; the app shell and `/demo/` (no faces) are
-public, though through the tunnel Cloudflare Access still asks for a team email. Any other device
+public (no Cloudflare Access login since Oct 13). Any other device
 needs the lab token as a cookie, set by opening the link from Today → "Open on phone" (QR or Copy
 link): **Same Wi-Fi** (LAN URL, via Vite) or **Anywhere** (`PUBLIC_URL`, via the tunnel). The token
 comes from `LAB_TOKEN` in `.env`, else is generated once into `.lab_token` (git-ignored).
 - Wi-Fi: Vite's proxy forwards the real client address (`xfwd`); the API trusts only the last entry.
 - Tunnel: `cloudflared` connects from localhost, so any request with `Cf-Connecting-IP` counts as
-  remote. Cloudflare Access (team emails only) is the outer lock, the token the inner one.
+  remote, and Cloudflare always sets that header, so a visitor can't pose as this PC. The lab token
+  or a sign-in is the only lock (checked Oct 13 as an outside visitor: data, scores, admin and
+  `/files` 401/403, photos with a `..` path too; `/demo/data` has no photo links, notes or key names;
+  the 6th wrong password gets 429).
 - Sign-in (Oct 11, `app/auth.py`): a session cookie also opens `/api` and `/files` for another
   device. Invite-only (`ADMIN_EMAILS` or added on the admin page); Google, GitHub and LinkedIn
   OAuth (verified email only), a one-time email link (Resend, `app/mail.py`; 15 minutes, one use,
@@ -150,6 +154,8 @@ comes from `LAB_TOKEN` in `.env`, else is generated once into `.lab_token` (git-
 - `/api` and `/files` responses carry `Cache-Control: private, no-store`, so Cloudflare never
   caches faces or scores.
 - Other devices only get background-free copies (`_mask/`); originals answer 403 off the PC.
+  Their URLs carry `?v=` (changes with the file), so browsers keep them (`private, immutable`);
+  every other private response is `no-store`.
   Masks are made in the browser (MediaPipe selfie segmenter, CPU) right after each capture or
   upload, and by the lab PC for any photo still without one. The API refuses an empty mask (<5% person). YouCam still analyses the originals: on Oct 7, blanked
   copies shifted radiance by +1.9 and +3.7 (0.6–1.2 noise SD, same direction), so mixing the two
@@ -186,7 +192,8 @@ Comparing a mean of k photos with a mean of k0 baseline photos, the floor become
 SD understates day-to-day noise, so light and time of day must be fixed (see TASKS.md noise results).
 Checkpoint days are every 7th day and the last day; the lab names their photos `day-07`, `day-07b`,
 `day-07c` (`today_photos` in `app/trials.py`) and the verdict takes all photos of the latest
-checkpoint day; other analysed days don't count.
+checkpoint day; other analysed days don't count. A missed checkpoint is made up on a day listed in trial.json
+`late_checkpoints` (`{"16": 14}`, `checkpoint_for`); photo names keep their real day.
 
 **Direction (confirmed Oct 7, YouCam docs):** a higher `raw_score` is better for every concern, so
 "moved the claimed way" means up. The UI marks every score column ↑ and colours a change ▲ better /

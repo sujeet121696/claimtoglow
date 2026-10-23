@@ -1,9 +1,8 @@
 # Tasks
 
 > Build plan. Deadline: **Nov 2, 2026, 11:45 am ET** (10:15 pm IST).
-> **Decided Oct 8:** everything is finished and submitted **by Oct 26**, one week early. The trials
-> keep their 21 days (last check-in Oct 28), so the submission goes in with the day-14 verdict and
-> is updated with the day-21 verdict Oct 28–29.
+> **Decided Oct 23 (was Oct 26):** submit **by Oct 31**, with the final day-21 verdict (checkpoint
+> Oct 28) in the video and text from the start; Nov 1–2 stay as buffer.
 
 ## Milestones
 
@@ -12,9 +11,9 @@
 | M1 | Trial started, noise floor measured, go/no-go decided | Oct 7 ✓ |
 | M2 | Analyzer, verdict engine and capture gate working in code | Oct 7 ✓ |
 | M3 | 3-photo checkpoints built (Oct 8 ✓); day-7 checkpoint analysed | Oct 14 |
-| M4 | Receipt, timeline and judge demo link done (Oct 8–9 ✓); day-14 checkpoint analysed | Oct 21 |
-| M5 | Demo video on YouTube, Devpost text, repo public, **submitted** | **Oct 26** |
-| M6 | Day-21 checkpoint analysed, final verdict added to the submission | Oct 29 |
+| M4 | Receipt, timeline and judge demo link done (Oct 8–9 ✓); day-14 checkpoint missed, made up on day 16 (Oct 23) | Oct 23 |
+| M5 | Day-21 checkpoint analysed, final verdict | Oct 28 |
+| M6 | Demo video on YouTube, Devpost text, repo public, **submitted** | **Oct 31** |
 
 ## Week plan
 
@@ -25,8 +24,11 @@
 | **Oct 14 (day 7)** | Checkpoint: 3 fresh photos each, split-analysed |
 | Oct 15 – 20 (weekend Oct 17–18) | ~~Timeline (21)~~ ✓, ~~receipt + badge (22)~~ ✓, ~~judge demo (23)~~ ✓ (Oct 8–9) |
 | **Oct 21 (day 14)** | Checkpoint: 3 fresh photos each, split-analysed; verdict for the demo |
-| Oct 22 – 26 (weekend Oct 24–25) | Demo video (24), Devpost text (25), repo public (26), rules check and **submit (27)** |
-| **Oct 28 (day 21)** | Final checkpoint, final verdict; update receipt, video note and Devpost text before Nov 2 |
+| **Oct 23 (day 16)** | Late day-14 checkpoint: 3 photos each, split-analysed |
+| Oct 24 – 27 (weekend Oct 24–25) | UI fixes, LinkedIn post (3), Devpost text draft (25), video script (24) |
+| **Oct 28 (day 21)** | Final checkpoint: 3 photos each, analysed the same day; final verdict |
+| Oct 29 – 30 | Record the video with the final verdict (24), final Devpost text (25), security checks, repo public (26) |
+| **Oct 31** | Rules check and **submit (27)**. Nov 1–2 buffer |
 
 ## Done
 - [x] Idea, name, repo, MIT license
@@ -197,14 +199,32 @@ day-00. Daily single photos are still taken and kept.
         radiance 14, texture 42, moisture 13; Sahni 8, 11, 16; Suvaani dark circles 15. Also seen:
         Sujeet's photo time drifted 16:08–21:56 IST; keep every photo near day 0's time
 
+23h. [x] Cloudflare Access login removed (Oct 13; Access application deleted in the Zero Trust
+        dashboard). The app's own lock was checked first (ARCHITECTURE: Access). Checked after, from
+        outside: `/`, `/demo/` and `/demo/data` 200 with no login; `/api` 401; original photos 403
+23i. [x] Faster photos (Oct 15): lists and cards load a 480 px thumbnail of the background-free
+        copy (~42 KB instead of ~414 KB, `_mask/thumb/`, made on first use and with each new mask);
+        View and Download keep the full copy. Background-free URLs carry `?v=` and are kept by the
+        browser for good (private, never Cloudflare), so a reload doesn't fetch them again.
+        Scores, originals and data stay no-store (tests in `tests/test_masking.py`)
+23j. [x] Late checkpoint (Oct 23): day 14 was missed by everyone (no photos days 11-15). A missed
+        checkpoint is made up only on a day listed in trial.json `late_checkpoints` (`{"16": 14}`
+        for all three, `trials.checkpoint_for`): day 16 takes 3 photos and the verdict counts it "for day 14";
+        timeline and receipt say so. Photo names keep their real day, so the dates stay true.
+        Also Oct 15-17: photos saved after midnight were renamed to the day they belonged to
+        (Sahni day-09 → 08, Sahni and Suvaani day-10 → 09)
+23k. [x] UI fixes (Oct 23): the Today card and receipt say "Next checkpoint: day 21" once a
+        checkpoint day's 3 photos are taken (not "checkpoint today"); the timeline chart shades days
+        with no photo ("no photos", days 11-15). App shell: hashed build files are kept for good,
+        pages are re-checked on every load (`main.public_cache`), so a rebuild shows without a hard reload
 23g. [x] `npm run local` (Oct 13): one command to set up, clean, test, type-check, build both apps and
         serve on :8000; `npm run local:tunnel` adds the Cloudflare tunnel
 
-## Oct 21 – 29 · Submit early → M5, M6
+## Oct 23 – 31 · Final checkpoint, then submit → M5, M6
 19. [ ] Analyse the day-14 checkpoint (Oct 21), then the final day-21 checkpoint (Oct 28)
-24. [ ] Demo video (1–3 min): claim on the box → split-face trial → verdict, uploaded to YouTube. **Due Oct 25**
-25. [ ] Devpost text: problem, differentiation, how YouCam is used, why `raw_score` + noise floor. **Due Oct 25**
+24. [ ] Demo video (1–3 min): claim on the box → split-face trial → verdict, uploaded to YouTube. **Due Oct 30**
+25. [ ] Devpost text: problem, differentiation, how YouCam is used, why `raw_score` + noise floor. **Due Oct 30**
         Oct 8: draft in `docs/DEVPOST.md`; project created on Devpost (draft, overview saved)
-26. [ ] Make the repo public (or share it with contact_event@PerfectCorp.com). **Due Oct 26**
-27. [ ] Final check against the rules, then submit. **Due Oct 26**
+26. [ ] Make the repo public (or share it with contact_event@PerfectCorp.com). **Due Oct 30**
+27. [ ] Final check against the rules, then submit. **Due Oct 31**
 28. [ ] Day-21 final verdict into the receipt and the Devpost text. **Due Oct 29**

@@ -44,7 +44,7 @@ export function ReceiptPage() {
               <h2>{data.product || "Product not set"}</h2>
               {data.claim && <blockquote><Clamp>“{data.claim}”</Clamp></blockquote>}
             </header>
-            <Verdict v={data.verdict} day={person.day} duration={data.duration_days} today={today} />
+            <Verdict v={data.verdict} day={person.day} duration={data.duration_days} today={today} done={person.today_done} />
             <Concerns r={data} />
             <Facts r={data} />
             <footer className="slip-foot">
@@ -68,10 +68,14 @@ const HEADLINE: Record<VerdictStatus, string> = {
 };
 
 /** The verdict as a stamp, with where the trial stands. */
-function Verdict({ v, day, duration, today }: { v: TrialVerdict; day: number | null; duration: number; today: string }) {
+/** " (taken late, for day 14)" when a missed checkpoint moved to a later day. */
+const late = (v: TrialVerdict) =>
+  v.checkpoint_for != null && v.checkpoint_for !== v.checkpoint_day ? ` (taken late, for day ${v.checkpoint_for})` : "";
+
+function Verdict({ v, day, duration, today, done }: { v: TrialVerdict; day: number | null; duration: number; today: string; done: boolean }) {
   const ended = day !== null && day > duration;
   // The demo is a snapshot, so it says when, instead of counting days that go stale.
-  const upcoming = DEMO ? (day !== null && day >= 0 ? `As of ${today}: day ${day} of ${duration}.` : null) : nextCheckpoint(day, duration);
+  const upcoming = DEMO ? (day !== null && day >= 0 ? `As of ${today}: day ${day} of ${duration}.` : null) : nextCheckpoint(day, duration, done);
   return (
     <section className={`slip-verdict ${statusTone(v.status)}`}>
       <DayRing day={day} duration={duration} />
@@ -79,7 +83,7 @@ function Verdict({ v, day, duration, today }: { v: TrialVerdict; day: number | n
         <p className="stamp">{HEADLINE[v.status]}</p>
         <p className="small">
           {v.reason}
-          {v.checkpoint_day !== null && ` Based on the day-${v.checkpoint_day} checkpoint.`}
+          {v.checkpoint_day !== null && ` Based on the day-${v.checkpoint_day} checkpoint${late(v)}.`}
         </p>
         <p className="small muted">{ended ? "Trial complete." : upcoming ?? "Trial not started."}</p>
       </div>

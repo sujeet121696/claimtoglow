@@ -60,7 +60,7 @@ function ConcernCard({ concern, data }: { concern: string; data: Timeline }) {
       <p className="small muted timeline-note">
         Change in treated − control since the baseline ({data.k0} photos: day 0 and the repeat photos); above 0 is better.
         Grey band: what one photo can move by noise alone, within a sitting and between days{band !== null ? ` (±${band.toFixed(1)})` : ""}.
-        Diamond: the checkpoint the verdict uses, with its own noise range.
+        Diamond: the checkpoint the verdict uses, with its own noise range. Grey columns: days with no photo.
       </p>
     </Card>
   );
@@ -90,8 +90,8 @@ function CheckinsCard({ data }: { data: Timeline }) {
             {data.entries.map((e) => (
               <tr key={e.stem} className={e.checkpoint ? "is-checkpoint" : ""}>
                 <th scope="row">
-                  {e.masked_url && <img src={e.masked_url} alt="" width={28} height={36} />}
-                  {e.stem}{e.checkpoint && <span className="muted small"> · checkpoint</span>}
+                  {e.thumb_url && <img src={e.thumb_url} alt="" width={28} height={36} loading="lazy" decoding="async" />}
+                  {e.stem}{e.checkpoint && <span className="muted small"> · checkpoint{e.checkpoint_for !== null && e.checkpoint_for !== e.day && ` (late, for day ${e.checkpoint_for})`}</span>}
                 </th>
                 <td>{savedAt(e.saved_at)}</td>
                 <td>

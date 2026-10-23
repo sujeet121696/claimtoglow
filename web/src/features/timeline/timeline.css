@@ -4,6 +4,7 @@
 .trend-wrap { width: 100%; }
 .trend { display: block; max-width: 100%; height: auto; }
 .trend .band { fill: var(--note-bg); }
+.trend .gap rect { fill: var(--border); opacity: 0.45; }
 .trend .zero { stroke: var(--border-strong); }
 .trend .checkpoint-line { stroke: var(--border); stroke-dasharray: 3 3; }
 .trend .tick { fill: var(--muted); font-size: 11px; }
