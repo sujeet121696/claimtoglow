@@ -12,7 +12,7 @@
 | M2 | Analyzer, verdict engine and capture gate working in code | Oct 7 ✓ |
 | M3 | 3-photo checkpoints built (Oct 8 ✓); day-7 checkpoint analysed | Oct 14 |
 | M4 | Receipt, timeline and judge demo link done (Oct 8–9 ✓); day-14 checkpoint missed, made up on day 16 (Oct 23) | Oct 23 |
-| M5 | Day-21 checkpoint analysed, final verdict | Oct 28 |
+| M5 | Day-21 checkpoint analysed, final verdict (claim not met, all three; Oct 28–30) | Oct 28 ✓ |
 | M6 | Demo video on YouTube, Devpost text, repo public, **submitted** | **Oct 31** |
 
 ## Week plan
@@ -161,7 +161,7 @@ day-00. Daily single photos are still taken and kept.
 16a. [x] Open the lab from anywhere (README "Open it from anywhere"). Oct 7: live at
        claimtoglow.kharidwise.com through a Cloudflare Tunnel, Access policy with the team emails,
        then the lab token; `PUBLIC_URL` in `.env`
-17. [ ] Keep daily photos going until day 21 (Oct 28)
+17. [x] Keep daily photos going until day 21 (Oct 28). Missed days 11–15 (Suvaani 10–15), 17, 18, 20
 18. [ ] Analyse each checkpoint the same day (Oct 14, 21, 28) to catch setup problems early
 20. [x] Claim agent: claim text → `{ concerns[], deadline_days }`. Oct 7: built (`app/llm.py`, `app/claim.py`,
         "Suggest from claim" in Person → Edit). Tested live on Groq, Gemini and NVIDIA. Real claims:
@@ -221,10 +221,13 @@ day-00. Daily single photos are still taken and kept.
         serve on :8000; `npm run local:tunnel` adds the Cloudflare tunnel
 
 ## Oct 23 – 31 · Final checkpoint, then submit → M5, M6
-19. [ ] Analyse the day-14 checkpoint (Oct 21), then the final day-21 checkpoint (Oct 28)
-24. [ ] Demo video (1–3 min): claim on the box → split-face trial → verdict, uploaded to YouTube. **Due Oct 30**
+19. [x] Analyse the day-14 checkpoint (late, day 16) and the day-21 checkpoint. Oct 28–30: all three
+        YouCam keys ran out of credits (`CreditInsufficiency`). Sujeet's day-21 photos ran on Suvaani's key;
+        the right half of Sujeet's and Sahni's day-21c and Sujeet's day-19 are not analysed, so their
+        day-21 verdicts use 2 photos. The admin units count still bills all trial-sujeet results to his key
+24. [x] Demo video (1–3 min), uploaded to YouTube Nov 2: https://www.youtube.com/watch?v=Hr0CTB6Ibj8
 25. [ ] Devpost text: problem, differentiation, how YouCam is used, why `raw_score` + noise floor. **Due Oct 30**
         Oct 8: draft in `docs/DEVPOST.md`; project created on Devpost (draft, overview saved)
 26. [ ] Make the repo public (or share it with contact_event@PerfectCorp.com). **Due Oct 30**
 27. [ ] Final check against the rules, then submit. **Due Oct 31**
-28. [ ] Day-21 final verdict into the receipt and the Devpost text. **Due Oct 29**
+28. [x] Day-21 final verdict into the receipt (automatic) and the Devpost text (Oct 30)

@@ -1,7 +1,7 @@
 # Devpost submission
 
-> Text for the Devpost project page (task 25). Only verified facts. Results per person go under
-> "Accomplishments" after the day-14 checkpoint (Oct 21) and the day-21 checkpoint (Oct 28).
+> Text for the Devpost project page (task 25). Only verified facts. Day-21 results added Oct 30
+> (from `trial_verdict`, cached results; all three YouCam keys were out of credits by then).
 > Devpost does not render LaTeX in the story here, so the formula is a plain code block.
 
 ## Project overview
@@ -71,20 +71,60 @@ within-sitting spread, so the first formula would have called noise a result.
 - **Distance.** YouCam rejects faces under 60% of the image width, and our distance drifted from day
   to day (76% of the width on day 0, 58% on day 1). The camera now refuses to capture unless the
   face width matches day 0 within ±8%.
+- **Real life gets in the way of a trial.** We missed daily photos on days 11–15 (Suvaani 10–15)
+  and 17, 18 and 20, so the day-14 checkpoint was taken on day 16. The app records it as a late
+  checkpoint instead of renaming the photos, and the timeline shows the missing days as gaps.
+- **We ran out of units.** Each teammate's free units were spent on the noise sets, daily
+  photos and checkpoints. On day 21 the keys ran out before the last half-face of Sujeet's and
+  Sahni's third photo, so their day-21 verdicts average 2 photos instead of 3; the noise floor
+  widens for that automatically.
 
 ## Accomplishments that we're proud of
 - A real trial, not a mockup: three of us run a 21-day split-face trial since Oct 7, treated side on
-  the same half for everyone, each billed to our own YouCam key.
+  the same half for everyone, each billed to our own YouCam key (Sujeet's day-21 photos to
+  Suvaani's, after his ran out).
   - Sujeet and Sahni: a face wash claiming to reduce tan and brighten (tracked: radiance, texture,
     moisture).
   - Suvaani: a brightening cream under one eye, for dark circles (tested off-label, and reported so).
-- Checkpoints on day 7, 14 and 21: 3 fresh photos each, averaged.
-- We measured the noise before trusting a single result, and "not enough evidence" is a valid answer.
+- Checkpoints on day 7, 14 and 21: 3 fresh photos each, averaged. The day-14 checkpoint was taken
+  late, on day 16, and the receipt says so.
+- We measured the noise before trusting a single result, and an honest "no" is a valid answer.
+
+**Results on day 21 (Oct 28).** Effect = change of treated − control since baseline; a change counts
+only beyond ± the noise floor.
+
+| Person | Product | Concern | Effect | Noise floor | Result |
+|---|---|---|---|---|---|
+| Sujeet | Face wash | Radiance | −7.2 | ±11.0 | no clear change |
+| Sujeet | Face wash | Texture | −7.8 | ±38.7 | no clear change |
+| Sujeet | Face wash | Moisture | +6.5 | ±7.8 | no clear change |
+| Sahni | Face wash | Radiance | −1.7 | ±4.1 | no clear change |
+| Sahni | Face wash | Texture | +0.5 | ±7.3 | no clear change |
+| Sahni | Face wash | Moisture | +1.6 | ±11.6 | no clear change |
+| Suvaani | Brightening cream | Dark circles | −0.4 | ±12.2 | no clear change |
+
+**Verdict: claim not met for all three.** No concern moved beyond the noise in 21 days, and the
+late day-14 checkpoint showed no clear change either. The measured changes were all smaller than
+what light and day-to-day variation alone produce.
+
+**Why the control matters, in our own data.** A plain before/after (day-0 photo vs the first day-21
+photo, YouCam `raw_score`) would have told two false stories:
+
+| | Before/after, whole face | Untreated half, same days | Claim to Glow |
+|---|---|---|---|
+| Sahni, texture | **+14.3** ("it works") | +6.9 | +0.5 vs ±7.3: no clear change |
+| Sujeet, radiance | **−22.2** ("it harmed my skin") | −16.2 | −7.2 vs ±11.0: no clear change |
+| Sujeet, moisture | **−15.2** | −15.0 | +6.5 vs ±7.8: no clear change |
+
+The half of the face that never got the product moved the same way, so the change came from light,
+season and the day, not the product. This is the problem we set out to solve, caught in a real trial.
 
 ## What we learned
 - Measure the instrument first. Split-face noise (treated − control) on 5 repeat photos: radiance
   SD 3.06, texture 1.53, dark circles 2.75.
 - Use `raw_score` for change over time; `ui_score` differs a lot from it.
+- Before/after photos lie in both directions. Over 21 days the untreated half of the face moved by
+  up to 16 points on its own; without a control, that reads as a product result.
 - The tricks behind fake before/after photos (light, angle, distance) can be blocked at capture time.
 
 ## What's next for Claim to Glow
@@ -106,7 +146,18 @@ groq, gemini, nvidia-nim, cloudflare
 
 ## Video
 
-_TODO_ (task 24, YouTube, 1–3 min)
+https://www.youtube.com/watch?v=Hr0CTB6Ibj8 (uploaded Nov 2, 2:43; slides, demo screens and voice-over). Script, about 2:30. Record the screen; show a face only
+if that teammate agrees (the judge demo at /demo/ is face-free and shows the same numbers).
+
+| Time | Screen | Voice |
+|---|---|---|
+| 0:00–0:15 | A skincare box: "reduces tan, brightens" | "Every skincare box makes a promise. The proof is a before/after photo, in different light, at a different angle. We put one claim on trial instead." |
+| 0:15–0:35 | Person editor: claim text, "Suggest from claim" → radiance, texture, moisture | "Claim to Glow turns the claim into YouCam skin concerns to measure." |
+| 0:35–1:00 | Camera with the day-0 ghost; capture blocked, then allowed | "The product goes on one half of the face only; the other half is the control. The camera only captures when distance, light and pose match day 0." |
+| 1:00–1:20 | Results: photos with their capture check, Analyse split | "YouCam Skin Analysis scores each half. Before the trial we took repeat photos to measure how much the score moves when nothing changed." |
+| 1:20–1:55 | Timeline: change since baseline per concern, with the grey noise band | "Three of us ran it for 21 days. Here's the twist. A plain before/after says Sahni's texture improved by 14 points, and that Sujeet's radiance dropped by 22. But the half with no product moved the same way. It was light and season, not the product." |
+| 1:55–2:15 | Receipt: verdict, noise floors, SHA-256 per photo | "So the verdict is honest: claim not met, nothing beyond the noise. Every photo's SHA-256 is on the receipt, and it says so when a checkpoint was taken late." |
+| 2:15–2:30 | Judge demo URL, badge | "Claim to Glow: the tool that tells you when a glow is just good lighting. Try the demo at claimtoglow.kharidwise.com/demo." |
 
 ## Additional info (judges and organisers only)
 

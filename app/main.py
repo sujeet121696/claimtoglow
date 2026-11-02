@@ -263,6 +263,7 @@ def analyze_photo(name: str, stem: str, split: bool = False):
         log.warning("analyse %s/%s split=%s: YouCam rejected it: %s: %s", name, stem, split, e.code, e.message)
         raise HTTPException(422, {"code": e.code, "message": e.message})
     except RuntimeError as e:
+        log.warning("analyse %s/%s split=%s: failed: %s", name, stem, split, str(e)[:500])
         raise HTTPException(502, str(e))
     return get_set(name)
 
